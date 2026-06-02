@@ -213,15 +213,42 @@ trading-bot/
 
 ### Step 2 — Add Alpaca API keys as GitHub Secrets
 
-1. Go to your repo → **Settings** → **Secrets and variables** → **Actions**
-2. Click **New repository secret** — add both:
+> **Important:** Alpaca gives you two completely separate sets of API keys —
+> one for Paper Trading and one for Live Trading. They are different keys
+> and must be stored separately. Never use live keys in paper mode or vice versa.
 
-| Secret name | Value |
-|-------------|-------|
-| `ALPACA_API_KEY` | Your Alpaca API key |
-| `ALPACA_API_SECRET` | Your Alpaca API secret |
+#### Where to find your keys
 
-Get your keys at: https://app.alpaca.markets → API Keys (top right menu)
+| Account type | URL to get keys |
+|---|---|
+| Paper keys | https://app.alpaca.markets → toggle to **Paper** (top left) → API Keys |
+| Live keys | https://app.alpaca.markets → toggle to **Live** → API Keys |
+
+#### Add all 4 secrets to GitHub
+
+Go to your repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+Add each of the following:
+
+| Secret name | Which key to paste | Required for |
+|---|---|---|
+| `ALPACA_PAPER_API_KEY` | Paper account API Key ID | Paper trading |
+| `ALPACA_PAPER_API_SECRET` | Paper account Secret Key | Paper trading |
+| `ALPACA_LIVE_API_KEY` | Live account API Key ID | Live trading only |
+| `ALPACA_LIVE_API_SECRET` | Live account Secret Key | Live trading only |
+
+You can skip the live keys for now if you are only paper trading.
+The bot will only use the key pair that matches the active `PAPER_MODE` setting.
+
+**How the bot picks the right keys automatically:**
+
+```
+PAPER_MODE = true   →  uses ALPACA_PAPER_API_KEY + ALPACA_PAPER_API_SECRET
+                        connects to https://paper-api.alpaca.markets
+
+PAPER_MODE = false  →  uses ALPACA_LIVE_API_KEY + ALPACA_LIVE_API_SECRET
+                        connects to https://api.alpaca.markets
+```
 
 Your keys are encrypted by GitHub and never visible in any log or to anyone.
 
@@ -295,23 +322,38 @@ Checklist before switching to live:
 - [ ] Comfortable with the position sizes being placed
 - [ ] Alpaca live account funded
 
-To switch to live mode:
+To switch to live mode — 3 things to do:
 
-1. Open `vwap_ema_rsi_bot.py`
-2. Find line ~44:
-   ```python
-   PAPER = os.getenv("PAPER_MODE", "true").lower() == "true"
-   ```
-3. Change the default to `"false"`:
-   ```python
-   PAPER = os.getenv("PAPER_MODE", "false").lower() == "true"
-   ```
-4. Commit and push — live trading begins on the next scheduled run
+**1. Add your live API keys to GitHub Secrets** (if not already done)
 
-Alternatively, update the workflow file default:
+Go to repo → Settings → Secrets and variables → Actions → add:
+- `ALPACA_LIVE_API_KEY` — your live account API Key ID
+- `ALPACA_LIVE_API_SECRET` — your live account Secret Key
+
+Get live keys at: https://app.alpaca.markets → switch to **Live** account (top left toggle) → API Keys
+
+**2. Change PAPER_MODE default in the workflow**
+
+Open `.github/workflows/trade.yml`, find:
 ```yaml
-default: 'false'   # was 'true'
+default: 'true'
 ```
+Change to:
+```yaml
+default: 'false'
+```
+Commit and push.
+
+**3. Confirm in the log**
+
+On the next run you should see:
+```
+INFO  Strategy bot starting — LIVE mode
+INFO  Endpoint : https://api.alpaca.markets
+INFO  PAPER flag value: PAPER=False (True=paper, False=live)
+```
+
+If you still see `paper-api.alpaca.markets` — the change did not take effect. Check the workflow file.
 
 ---
 

@@ -41,9 +41,16 @@ from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 
-API_KEY    = os.getenv("ALPACA_API_KEY",    "YOUR_API_KEY_HERE")
-API_SECRET = os.getenv("ALPACA_API_SECRET", "YOUR_API_SECRET_HERE")
-PAPER      = os.getenv("PAPER_MODE", "true").lower() == "true"          # ← Set False for live trading
+PAPER      = os.getenv("PAPER_MODE", "true").lower() == "true"
+
+# Alpaca uses SEPARATE keys for paper and live accounts.
+# Add both sets in GitHub Secrets — bot picks the right pair automatically.
+if PAPER:
+    API_KEY    = os.getenv("ALPACA_PAPER_API_KEY",    "YOUR_PAPER_KEY_HERE")
+    API_SECRET = os.getenv("ALPACA_PAPER_API_SECRET", "YOUR_PAPER_SECRET_HERE")
+else:
+    API_KEY    = os.getenv("ALPACA_LIVE_API_KEY",    "YOUR_LIVE_KEY_HERE")
+    API_SECRET = os.getenv("ALPACA_LIVE_API_SECRET", "YOUR_LIVE_SECRET_HERE")
 
 # Stocks to monitor — add/remove as you like
 WATCHLIST  = ["NBIS", "NVDA", "TSLA", "AAPL", "MSFT"]

@@ -63,8 +63,10 @@ jobs:
 
       - name: Run trading bot
         env:
-          ALPACA_API_KEY:    ${{ secrets.ALPACA_API_KEY }}
-          ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+          ALPACA_PAPER_API_KEY:    ${{ secrets.ALPACA_PAPER_API_KEY }}
+          ALPACA_PAPER_API_SECRET: ${{ secrets.ALPACA_PAPER_API_SECRET }}
+          ALPACA_LIVE_API_KEY:     ${{ secrets.ALPACA_LIVE_API_KEY }}
+          ALPACA_LIVE_API_SECRET:  ${{ secrets.ALPACA_LIVE_API_SECRET }}
           PAPER_MODE:        ${{ github.event.inputs.paper_mode || 'true' }}
         run: python vwap_ema_rsi_bot.py
 
