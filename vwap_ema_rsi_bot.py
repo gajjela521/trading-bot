@@ -369,8 +369,11 @@ def open_trade_count() -> int:
 # ─── MAIN LOOP ─────────────────────────────────────────────────────────────────
 
 def run():
-    mode = "PAPER" if PAPER else "LIVE"
+    mode     = "PAPER" if PAPER else "LIVE"
+    endpoint = "https://paper-api.alpaca.markets" if PAPER else "https://api.alpaca.markets"
     log.info(f"Strategy bot starting — {mode} mode")
+    log.info(f"Endpoint : {endpoint}")
+    log.info(f"PAPER flag value: PAPER={PAPER} (True=paper, False=live)")
     log.info(f"Watchlist: {WATCHLIST}")
     log.info(f"Scan interval: {SCAN_INTERVAL_SEC}s | Max trades: {MAX_OPEN_TRADES}")
 
@@ -448,7 +451,9 @@ def run_once():
     open_trades   = open_trade_count()
 
     log.info(
-        f"=== Scan start === Portfolio: \${portfolio_val:,.2f} | "
+        f"=== Scan start === {'PAPER' if PAPER else 'LIVE'} | "
+        f"Endpoint: {'https://paper-api.alpaca.markets' if PAPER else 'https://api.alpaca.markets'} | "
+        f"Portfolio: ${portfolio_val:,.2f} | "
         f"Open trades: {open_trades}/{MAX_OPEN_TRADES}"
     )
 
@@ -464,7 +469,7 @@ def run_once():
         signal = compute_signal(symbol)
         log.info(
             f"{symbol}: {signal['signal']:5s} | "
-            f"Price \${signal.get('price','?')} | "
+            f"Price ${signal.get('price','?')} | "
             f"RSI {signal.get('rsi_val','?')} | "
             f"{signal['reason']}"
         )
