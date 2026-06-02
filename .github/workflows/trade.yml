@@ -2,9 +2,8 @@ name: VWAP EMA RSI Trading Bot
 
 on:
   schedule:
-    # Runs every 15 min, Mon–Fri, 9:30 AM – 4:00 PM ET
-    # GitHub Actions uses UTC — ET is UTC-4 in summer, UTC-5 in winter
-    # Summer (EDT): market = 13:30–20:00 UTC
+    # Every 15 min, Mon–Fri, 9:45 AM – 3:30 PM ET (UTC-4 summer)
+    # Opening 15-min buffer built into bot — cron starts at 9:30 AM UTC offset
     - cron: "30 13 * * 1-5"
     - cron: "45 13 * * 1-5"
     - cron: "0  14 * * 1-5"
@@ -30,50 +29,69 @@ on:
     - cron: "0  19 * * 1-5"
     - cron: "15 19 * * 1-5"
     - cron: "30 19 * * 1-5"
-    # Stop 30 min before close (19:30 UTC = 3:30 PM ET)
-    # Bot's own timing guard will also prevent close-time trades
 
-  # Allow manual trigger anytime (for testing)
+  # Manual trigger — for testing or forcing a scan
   workflow_dispatch:
     inputs:
       paper_mode:
-        description: 'Run in paper mode?'
+        description: 'Trading mode'
         required: true
         default: 'true'
         type: choice
-        options: ['true', 'false']
+        options:
+          - 'true'    # Paper trading (safe)
+          - 'false'   # Live trading (real money)
+      live_capital_limit:
+        description: 'Max capital to use in LIVE mode (USD). Ignored in paper mode.'
+        required: false
+        default: '1000'
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 10        # Kill if something hangs
+    timeout-minutes: 8
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"           # Caches pip installs — speeds up runs
+          cache: "pip"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Run trading bot
         env:
+          # Mode — paper by default on scheduled runs, overridable manually
+          PAPER_MODE: ${{ github.event.inputs.paper_mode || 'true' }}
+
+          # Capital limit for live mode (ignored in paper mode)
+          LIVE_CAPITAL_LIMIT: ${{ github.event.inputs.live_capital_limit || '0' }}
+
+          # Paper trading keys
           ALPACA_PAPER_API_KEY:    ${{ secrets.ALPACA_PAPER_API_KEY }}
           ALPACA_PAPER_API_SECRET: ${{ secrets.ALPACA_PAPER_API_SECRET }}
+
+          # Live trading keys (add to GitHub Secrets when ready to go live)
           ALPACA_LIVE_API_KEY:     ${{ secrets.ALPACA_LIVE_API_KEY }}
           ALPACA_LIVE_API_SECRET:  ${{ secrets.ALPACA_LIVE_API_SECRET }}
-          PAPER_MODE:        ${{ github.event.inputs.paper_mode || 'true' }}
+
+          # GitHub run ID — written into every trade record for traceability
+          GITHUB_RUN_ID:           ${{ github.run_id }}
+
         run: python vwap_ema_rsi_bot.py
 
-      - name: Upload log as artifact
-        if: always()            # Upload log even if bot errors
+      - name: Upload trade log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trade-log-${{ github.run_id }}
-          path: strategy_log.txt
+          path: |
+            strategy_log.txt
+            trade_records.json
           retention-days: 30
+          if-no-files-found: ignore

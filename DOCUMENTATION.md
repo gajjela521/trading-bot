@@ -1,177 +1,188 @@
-# VWAP + EMA + RSI Automated Trading Bot
+# VWAP + EMA + RSI Automated Trading Bot — Documentation
 
-A fully automated short-term trading bot that runs on GitHub Actions (free), scans your watchlist every 15 minutes during US market hours, and places orders on your Alpaca account when all strategy conditions align.
+A production-grade automated trading bot that runs on GitHub Actions (free),
+scans your watchlist every 15 minutes during US market hours, and places
+bracket orders on Alpaca when all strategy conditions align.
 
 ---
 
 ## Table of contents
 
-1. [How it works](#1-how-it-works)
+1. [Architecture overview](#1-architecture-overview)
 2. [Strategy rules](#2-strategy-rules)
 3. [Risk management rules](#3-risk-management-rules)
 4. [Entry and exit logic](#4-entry-and-exit-logic)
 5. [Timing rules](#5-timing-rules)
 6. [First-time setup](#6-first-time-setup)
-7. [How to add or remove stocks](#7-how-to-add-or-remove-stocks)
-8. [How to monitor trades](#8-how-to-monitor-trades)
-9. [How to go live](#9-how-to-go-live)
-10. [How to stop the bot](#10-how-to-stop-the-bot)
-11. [Tuning the parameters](#11-tuning-the-parameters)
-12. [Understanding the log output](#12-understanding-the-log-output)
-13. [Free tier limits](#13-free-tier-limits)
-14. [Disclaimer](#14-disclaimer)
+7. [How to run manually](#7-how-to-run-manually)
+8. [Live trading — capital confirmation](#8-live-trading--capital-confirmation)
+9. [Trade records](#9-trade-records)
+10. [How to monitor](#10-how-to-monitor)
+11. [How to go live](#11-how-to-go-live)
+12. [How to stop the bot](#12-how-to-stop-the-bot)
+13. [How to update the watchlist](#13-how-to-update-the-watchlist)
+14. [Tuning parameters](#14-tuning-parameters)
+15. [Reading the log output](#15-reading-the-log-output)
+16. [Free tier limits](#16-free-tier-limits)
+17. [Disclaimer](#17-disclaimer)
 
 ---
 
-## 1. How it works
+## 1. Architecture overview
 
 ```
-Every 15 minutes (Mon–Fri, 9:45 AM – 3:30 PM ET)
-        ↓
-GitHub Actions wakes up an Ubuntu runner
-        ↓
-Installs dependencies (cached, ~10 sec)
-        ↓
-Bot fetches 15-minute bars for each stock in WATCHLIST
-        ↓
-Computes VWAP, EMA 9, EMA 21, RSI 14, ATR 14, Volume
-        ↓
-Checks all 4 signal conditions
-        ↓
-Signal found?  YES → places 3 orders (entry + stop + targets)
-               NO  → logs reason, exits cleanly
-        ↓
-Full log saved as GitHub Actions artifact (30 days)
+GitHub Actions (cron, every 15 min, Mon–Fri)
+          │
+          ▼
+  Ubuntu runner spins up
+  pip install (cached, ~10 sec)
+  python vwap_ema_rsi_bot.py
+          │
+          ├─ Market closed? → log reason, exit immediately (no waiting)
+          │
+          ├─ Live mode? → verify LIVE_CAPITAL_LIMIT is set → log confirmation
+          │
+          ├─ Fetch 15-min bars for each stock in WATCHLIST
+          │
+          ├─ Compute VWAP / EMA 9 / EMA 21 / RSI 14 / ATR 14 / Volume
+          │
+          ├─ All 4 conditions met?
+          │     YES → place entry + stop + T1 + T2 orders on Alpaca
+          │           append record to trade_records.json
+          │     NO  → log reason, move to next stock
+          │
+          └─ Upload strategy_log.txt + trade_records.json as artifacts
 ```
 
-Each GitHub Actions run is independent. The bot does one complete scan per trigger — it does not run continuously between scans.
+Each GitHub Actions run is a **single scan** — the bot does not loop or wait.
+The cron schedule handles the 15-minute repeat. This means:
+- No idle compute cost between scans
+- Each run is fully stateless and isolated
+- Market closed runs exit in under 5 seconds
 
 ---
 
 ## 2. Strategy rules
 
-The strategy requires **all 4 conditions** to be true at the same time before placing any trade. One or two conditions alone are not enough — this is what makes it high-probability.
+All **4 conditions** must be true simultaneously. Partial matches are skipped.
 
-### Long (buy) signal — all 4 must be true
+### Long (buy) signal
 
-| # | Condition | What it means |
-|---|-----------|---------------|
-| 1 | `price > VWAP` | Stock is trading above the institutional benchmark — bulls in control |
-| 2 | `EMA 9 > EMA 21` | Short-term momentum is above medium-term trend — uptrend confirmed |
-| 3 | `45 < RSI < 62` | Momentum is building but not yet overbought — still room to run |
-| 4 | `volume > 1.2× 20-bar average` | Institutional participation confirmed — not a weak, low-conviction move |
+| # | Condition | Value | Meaning |
+|---|-----------|-------|---------|
+| 1 | Price vs VWAP | `price > VWAP` | Bullish side of institutional benchmark |
+| 2 | EMA crossover | `EMA9 > EMA21` | Short-term trend above medium-term |
+| 3 | RSI zone | `45 < RSI < 62` | Momentum rising, not yet overbought |
+| 4 | Volume | `volume > 1.2× 20-bar avg` | Institutional participation confirmed |
 
-### Short (sell) signal — all 4 must be true
+### Short (sell) signal
 
-| # | Condition | What it means |
-|---|-----------|---------------|
-| 1 | `price < VWAP` | Stock is trading below the institutional benchmark — bears in control |
-| 2 | `EMA 9 < EMA 21` | Short-term momentum is below medium-term trend — downtrend confirmed |
-| 3 | `38 < RSI < 55` | Downward momentum building but not yet oversold — still room to fall |
-| 4 | `volume > 1.2× 20-bar average` | Selling pressure is real and institutional — not a noise move |
+| # | Condition | Value | Meaning |
+|---|-----------|-------|---------|
+| 1 | Price vs VWAP | `price < VWAP` | Bearish side of institutional benchmark |
+| 2 | EMA crossover | `EMA9 < EMA21` | Short-term trend below medium-term |
+| 3 | RSI zone | `38 < RSI < 55` | Momentum falling, not yet oversold |
+| 4 | Volume | `volume > 1.2× 20-bar avg` | Selling pressure confirmed |
 
-### Why these specific RSI ranges?
+### Why the RSI 45–62 zone (not 30/70)?
 
-Most traders use RSI at extremes (buy at 30, sell at 70). The edge here is the **middle zone**:
-- RSI 45–62 for longs = momentum is rising but not exhausted. You are entering early, not chasing.
-- RSI 38–55 for shorts = momentum is falling but not yet oversold. You get the move, not the bounce.
-- If RSI is already above 65 on a long setup, the move has largely happened — the bot correctly skips it.
+Most traders use RSI at extremes. The edge here is the **middle zone**:
+- RSI 45–62 for longs = momentum is rising but not exhausted → enter early, not late
+- RSI 38–55 for shorts = momentum is falling but not yet oversold → get the move, not the bounce
+- RSI above 65 on a long setup means the move has already happened → bot correctly skips it
 
-### Why VWAP matters
+### Why VWAP?
 
-VWAP (Volume Weighted Average Price) resets every trading day at market open. It is the benchmark that institutional traders (mutual funds, hedge funds, market makers) use to measure their own execution quality. When price dips to VWAP in an uptrend, institutions buy. When price rallies to VWAP in a downtrend, institutions sell. Trading at VWAP puts you alongside smart money, not against it.
+VWAP resets every trading day. It is the benchmark institutions use to measure their own execution. When price dips to VWAP in an uptrend, institutions step in to buy. Trading at VWAP puts you alongside smart money.
 
-### Why EMA 9 / EMA 21
+### Why EMA 9 / 21?
 
-- EMA 9 = fast-moving, reacts quickly to recent price action
-- EMA 21 = slower, reflects the established short-term trend
-- When EMA 9 crosses above EMA 21, the trend has shifted up — confirmed uptrend
-- When EMA 9 crosses below EMA 21, the trend has shifted down — confirmed downtrend
-- Using both together filters out random single-candle spikes
+- EMA9 reacts quickly to recent price action
+- EMA21 reflects the established short-term trend
+- When EMA9 crosses above EMA21, an uptrend is confirmed — not a noise spike
+- The crossing filters out single-candle fakeouts
 
 ---
 
 ## 3. Risk management rules
 
-These rules are hard-coded and cannot be bypassed. Every single trade follows them automatically.
+Every trade follows these rules automatically. They cannot be bypassed.
 
-| Rule | Value | Why |
-|------|-------|-----|
-| Max risk per trade | **1.5% of portfolio** | A losing streak of 10 trades in a row still leaves 85% of capital intact |
-| Stop loss | **1 ATR from entry** | ATR (Average True Range) sizes the stop to actual recent volatility — not arbitrary |
-| Target 1 | **2× stop distance** | Minimum 1:2 risk-reward. Even at 40% win rate you break even |
-| Target 2 | **3× stop distance** | Lets winners run on strong trends |
-| Position split at T1 | **50% closed at T1** | Locks in profit while keeping half the position running |
-| Max open trades | **3 simultaneous** | Prevents over-exposure to correlated market moves |
-| Max position size | **20% of portfolio** | No single stock can dominate the account |
+| Rule | Value | Reason |
+|------|-------|--------|
+| Max risk per trade | 1.5% of portfolio | 10 straight losses still leaves 85% of capital |
+| Stop loss | 1 ATR from entry | ATR sizes stop to actual recent volatility |
+| Target 1 | 2× stop distance, 50% of position | Lock in profit early |
+| Target 2 | 3× stop distance, remaining 50% | Let winners run |
+| Max simultaneous trades | 3 | Limits correlated market exposure |
+| Max single position | 20% of portfolio | No single stock dominates |
+| Live capital limit | Set by you per run | Hard ceiling — bot aborts if unset in live mode |
 
-### How position size is calculated
+### Position size formula
 
 ```
-Risk dollars   = Portfolio value × 1.5%
-Stop distance  = 1 × ATR (14-period)
-Shares         = Risk dollars ÷ Stop distance
-Final shares   = min(calculated shares, 20% of portfolio ÷ price)
+risk_dollars   = portfolio_value × 1.5%
+stop_distance  = 1 × ATR(14)
+raw_shares     = risk_dollars ÷ stop_distance
+cap_by_pct     = (portfolio × 20%) ÷ price
+cap_by_limit   = LIVE_CAPITAL_LIMIT ÷ price   (live mode only)
+final_shares   = min(raw_shares, cap_by_pct, cap_by_limit)
 ```
 
-**Example:** $50,000 portfolio, stock at $100, ATR = $3.00
-- Risk dollars = $50,000 × 1.5% = $750
-- Shares = $750 ÷ $3.00 = 250 shares
-- Position value = 250 × $100 = $25,000 (50% of portfolio — but capped at 20% = $10,000 = 100 shares)
-- Final: 100 shares
+**Example** — $50,000 portfolio, stock at $100, ATR = $3, limit = $5,000:
+```
+risk_dollars  = $750
+raw_shares    = 250
+cap_by_pct    = 100 shares  ($10,000 cap)
+cap_by_limit  = 50 shares   ($5,000 cap)
+final_shares  = 50
+position_val  = $5,000
+max_loss      = 50 × $3 = $150
+```
 
 ---
 
 ## 4. Entry and exit logic
 
-### Order sequence (placed automatically on signal)
+### Order sequence (all placed within seconds of signal)
 
 ```
-1. Market order  →  Entry at current price (immediate fill)
-2. Stop order    →  Stop loss at 1 ATR away (protects capital)
-3. Limit order   →  Target 1 at 2× risk (closes 50% of position)
-4. Limit order   →  Target 2 at 3× risk (closes remaining 50%)
+1. Market order  →  Entry at current price
+2. Stop order    →  Stop loss at 1 ATR from entry
+3. Limit order   →  Target 1 at 2× risk  (50% of shares)
+4. Limit order   →  Target 2 at 3× risk  (remaining shares)
 ```
-
-All 4 orders are placed within seconds of each other.
 
 ### Long trade example
 
 ```
-Stock:    NBIS
-Price:    $255.00
-ATR:      $8.00
-Shares:   45
+Stock : NBIS   |   Price : $255   |   ATR : $8   |   Qty : 45 shares
 
-Entry:    $255.00  (market order, immediate)
-Stop:     $247.00  (= 255 - 8 × 1.0)   → loss if hit: $360
-Target 1: $271.00  (= 255 + 8 × 2.0)   → profit on 22 shares: $352  ✓
-Target 2: $279.00  (= 255 + 8 × 3.0)   → profit on 23 shares: $552  ✓
+Entry   $255.00  (immediate, market)
+Stop    $247.00  (= 255 − 8)          → max loss if hit: $360
+T1      $271.00  (= 255 + 8×2)        → profit on 22 shares: $352  ✓
+T2      $279.00  (= 255 + 8×3)        → profit on 23 shares: $552  ✓
 ```
 
 ### Short trade example
 
 ```
-Stock:    TSLA
-Price:    $180.00
-ATR:      $5.00
-Shares:   60
+Stock : TSLA   |   Price : $180   |   ATR : $5   |   Qty : 60 shares
 
-Entry:    $180.00  (market order, short)
-Stop:     $185.00  (= 180 + 5 × 1.0)   → loss if hit: $300
-Target 1: $170.00  (= 180 - 5 × 2.0)   → profit on 30 shares: $300  ✓
-Target 2: $165.00  (= 180 - 5 × 3.0)   → profit on 30 shares: $450  ✓
+Entry   $180.00  (immediate, market short)
+Stop    $185.00  (= 180 + 5)          → max loss if hit: $300
+T1      $170.00  (= 180 − 5×2)        → profit on 30 shares: $300  ✓
+T2      $165.00  (= 180 − 5×3)        → profit on 30 shares: $450  ✓
 ```
 
-### After Target 1 hits
+### After Target 1 hits — manual step recommended
 
-The bot places the stop and target orders at trade entry, but does **not** automatically move the stop to breakeven after T1 fills. This is a manual action you should do yourself in Alpaca:
+The bot sets all orders at trade entry. After T1 fills, **manually move your
+stop to breakeven** in the Alpaca UI to protect against a winner turning loser:
 
 1. Log in to app.alpaca.markets
-2. Go to Orders → find your open stop order
-3. Modify the stop price to your entry price (breakeven)
-
-This protects you from a winning trade turning into a loser.
+2. Orders → find your open stop order for the symbol
+3. Modify stop price to your original entry price
 
 ---
 
@@ -179,269 +190,349 @@ This protects you from a winning trade turning into a loser.
 
 | Rule | Value | Reason |
 |------|-------|--------|
-| Market open buffer | First 15 min skipped (9:30–9:45 AM ET) | Opening gap and noise settle down |
-| Market close buffer | Last 30 min skipped (3:30–4:00 PM ET) | Wide spreads, erratic moves near close |
-| Trading days | Monday–Friday only | US market schedule |
-| Pre-market / after-hours | Never trades | VWAP is meaningless outside regular hours |
-| Scan frequency | Every 15 minutes | Matches the 15-minute candle timeframe used for signals |
+| Opening buffer | Skip first 15 min (9:30–9:45 AM ET) | Gap volatility settles |
+| Closing buffer | Stop 30 min before close (after 3:30 PM ET) | Erratic end-of-day moves |
+| Schedule | Mon–Fri only | US market days |
+| Pre/after market | Never | VWAP meaningless outside regular hours |
+| Market closed | Exit immediately with clear message | No spinning, no waiting |
 
-The bot checks market timing at the start of every run. If it is outside the trading window, it logs the reason and exits immediately without scanning.
+If the bot runs and the market is closed, you will see exactly one log line:
+
+```
+Market status: Market closed — next open: Mon Jun 08 09:30 AM ET
+Nothing to do — exiting cleanly.
+```
+
+Then it exits. No looping, no sleeping, no wasted compute.
 
 ---
 
 ## 6. First-time setup
 
 ### Prerequisites
-- GitHub account (free)
+
+- GitHub account (free) — your repo is already set up
 - Alpaca account (free) — paper or live at app.alpaca.markets
 
-### Step 1 — Repo is already set up
+### Step 1 — Add GitHub Secrets
 
-Your repo is live at: **https://github.com/gajjela521/trading-bot**
+> Alpaca issues **two completely separate key pairs** — one for Paper, one for Live.
+> They are different keys and must never be mixed up.
 
-It contains:
-```
-trading-bot/
-├── .github/
-│   └── workflows/
-│       └── trade.yml          ← GitHub Actions scheduler
-├── vwap_ema_rsi_bot.py        ← Strategy bot
-├── requirements.txt           ← Python dependencies
-├── SETUP_GUIDE.md             ← Quick start
-└── DOCUMENTATION.md           ← This file
-```
+**Where to get your keys:**
 
-### Step 2 — Add Alpaca API keys as GitHub Secrets
+| Account | URL |
+|---------|-----|
+| Paper keys | app.alpaca.markets → toggle to **Paper** (top-left) → API Keys |
+| Live keys | app.alpaca.markets → toggle to **Live** → API Keys |
 
-> **Important:** Alpaca gives you two completely separate sets of API keys —
-> one for Paper Trading and one for Live Trading. They are different keys
-> and must be stored separately. Never use live keys in paper mode or vice versa.
+**Add secrets to GitHub:**
 
-#### Where to find your keys
+Go to: your repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 
-| Account type | URL to get keys |
-|---|---|
-| Paper keys | https://app.alpaca.markets → toggle to **Paper** (top left) → API Keys |
-| Live keys | https://app.alpaca.markets → toggle to **Live** → API Keys |
-
-#### Add all 4 secrets to GitHub
-
-Go to your repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
-
-Add each of the following:
-
-| Secret name | Which key to paste | Required for |
+| Secret name | What to paste | When needed |
 |---|---|---|
-| `ALPACA_PAPER_API_KEY` | Paper account API Key ID | Paper trading |
-| `ALPACA_PAPER_API_SECRET` | Paper account Secret Key | Paper trading |
-| `ALPACA_LIVE_API_KEY` | Live account API Key ID | Live trading only |
-| `ALPACA_LIVE_API_SECRET` | Live account Secret Key | Live trading only |
+| `ALPACA_PAPER_API_KEY` | Paper API Key ID | Now (paper trading) |
+| `ALPACA_PAPER_API_SECRET` | Paper Secret Key | Now (paper trading) |
+| `ALPACA_LIVE_API_KEY` | Live API Key ID | Only when going live |
+| `ALPACA_LIVE_API_SECRET` | Live Secret Key | Only when going live |
 
-You can skip the live keys for now if you are only paper trading.
-The bot will only use the key pair that matches the active `PAPER_MODE` setting.
-
-**How the bot picks the right keys automatically:**
+**How the bot picks keys:**
 
 ```
-PAPER_MODE = true   →  uses ALPACA_PAPER_API_KEY + ALPACA_PAPER_API_SECRET
-                        connects to https://paper-api.alpaca.markets
+PAPER_MODE=true   →  uses ALPACA_PAPER_API_KEY + ALPACA_PAPER_API_SECRET
+                      connects to https://paper-api.alpaca.markets
 
-PAPER_MODE = false  →  uses ALPACA_LIVE_API_KEY + ALPACA_LIVE_API_SECRET
-                        connects to https://api.alpaca.markets
+PAPER_MODE=false  →  uses ALPACA_LIVE_API_KEY  + ALPACA_LIVE_API_SECRET
+                      connects to https://api.alpaca.markets
 ```
 
-Your keys are encrypted by GitHub and never visible in any log or to anyone.
+### Step 2 — Automatic scheduling is live
 
-### Step 3 — Test with a manual run
+The workflow file is already in the repo. GitHub Actions will run the bot
+automatically every 15 minutes on trading days. Nothing else to do.
+
+---
+
+## 7. How to run manually
+
+Useful for testing or forcing a scan outside the cron schedule:
 
 1. Go to your repo → **Actions** tab
 2. Click **VWAP EMA RSI Trading Bot** in the left sidebar
-3. Click **Run workflow** (top right of the table)
-4. Set `paper_mode` = **true**
+3. Click **Run workflow** (top-right of the table)
+4. Fill in the inputs:
+
+| Input | Description | Example |
+|-------|-------------|---------|
+| `paper_mode` | `true` = paper, `false` = live | `true` |
+| `live_capital_limit` | Max USD to use (live mode only) | `1000` |
+
 5. Click the green **Run workflow** button
-6. Click the run as it appears → click **run-bot** → watch the live log
-
-You should see each stock in the watchlist being scanned with signal results.
-
-### Step 4 — Automatic runs begin
-
-Once the workflow file is in the repo, GitHub Actions automatically runs it on the cron schedule every trading day. No further action needed.
+6. Click the run as it appears → click **run-bot** → watch live log
 
 ---
 
-## 7. How to add or remove stocks
+## 8. Live trading — capital confirmation
 
-Open `vwap_ema_rsi_bot.py` in your repo (click the file → pencil icon to edit).
+When `PAPER_MODE=false`, the bot runs a capital confirmation check **before
+scanning any stocks**. It will log:
 
-Find line ~48:
-```python
-WATCHLIST = ["NBIS", "NVDA", "TSLA", "AAPL", "MSFT"]
+```
+================================================================
+  LIVE TRADING MODE — REAL MONEY WILL BE USED
+================================================================
+  Portfolio value   : $52,430.00
+  Capital limit set : $5,000.00
+  Max risk / trade  : $786.45  (1.5%)
+  Max open trades   : 3
+  Max total exposure: $31,458.00
+================================================================
+Capital confirmation passed — proceeding with limit $5,000.00.
 ```
 
-Add or remove any US stock ticker. Save (Commit changes). The next scheduled run picks it up automatically.
+The bot **aborts with an error** (no trades placed) if:
+- `LIVE_CAPITAL_LIMIT` is not set or is zero
+- The limit exceeds the portfolio value
+- The limit is less than a single trade's risk amount
 
-**Tips for choosing watchlist stocks:**
-- Stick to stocks with average daily volume above 1 million shares (liquidity)
-- Avoid stocks below $10 (too volatile, wide spreads)
-- 5–10 stocks is the sweet spot — enough opportunities, not too much noise
-- Earnings day? Remove the stock that day — fundamentals override technicals
+You set `live_capital_limit` in the **Run workflow** input each time you
+trigger a live run manually. For scheduled live runs, set it as a GitHub
+Secret named `LIVE_CAPITAL_LIMIT`.
 
 ---
 
-## 8. How to monitor trades
+## 9. Trade records
 
-### View the scan log (every run)
+Every executed trade (and every failed attempt) is written to `trade_records.json`.
 
-Repo → **Actions** tab → click any run → click **run-bot** job → full output visible
+### What is stored per trade
 
-Each line shows:
+```json
+{
+  "timestamp":       "2026-06-02T10:15:03-04:00",
+  "run_id":          "1234567890",
+  "mode":            "PAPER",
+  "symbol":          "NBIS",
+  "direction":       "LONG",
+  "entry_price":     255.0,
+  "qty":             45,
+  "stop_price":      247.0,
+  "target1_price":   271.0,
+  "target2_price":   279.0,
+  "risk_dollars":    360.0,
+  "portfolio_value": 52430.0,
+  "entry_order_id":  "abc123...",
+  "stop_order_id":   "def456...",
+  "t1_order_id":     "ghi789...",
+  "t2_order_id":     "jkl012...",
+  "signal_reason":   "Price 255.0 > VWAP 248.12  |  EMA9 261.4 > EMA21 244.8  |  RSI 52.3 in [45–62]  |  Vol 1,823,400 > 1,512,000",
+  "status":          "OPEN"
+}
 ```
-2026-06-02 10:15:03  INFO     NBIS : LONG  | Price $255.0 | RSI 52.3 | Price $255 > VWAP $248 | EMA9 261 > EMA21 244 | RSI 52.3 in [45–62] | Volume 1.8M > avg 1.5M
-2026-06-02 10:15:04  INFO     NVDA : NONE  | Price $890.0 | RSI 67.1 | RSI 67.1 outside entry zones
+
+### Retention policy
+
+- Records older than **7 days are automatically purged** at the start of every run
+- Only the current rolling week is kept
+- Purge is atomic — the file is never left in a corrupt state
+- Failed order attempts are also recorded (status = "ERROR: ...") for audit purposes
+
+### Accessing the records
+
+**In GitHub Actions artifacts** — every run uploads both files:
+- `strategy_log.txt` — full human-readable log
+- `trade_records.json` — structured trade data
+
+Repo → Actions → click any run → scroll to **Artifacts** → download
+
+Records are kept as artifacts for **30 days**.
+
+### Weekly summary in log
+
+Every run prints a summary of the week's records:
+
 ```
-
-### Download the full log file
-
-Repo → Actions → click any run → scroll to **Artifacts** section → download `trade-log-XXXXXX` (kept 30 days)
-
-### View placed orders in Alpaca
-
-- Paper trading: https://app.alpaca.markets → Paper Trading → Orders
-- Live trading: https://app.alpaca.markets → Live Trading → Orders
+Trade records (last 7 days): 12 total  |  LONG=8  SHORT=4  |  PAPER=12  LIVE=0
+```
 
 ---
 
-## 9. How to go live
+## 10. How to monitor
 
-**Do not go live until you have completed at least 2 weeks of paper trading.**
+### Live log during a run
 
-Checklist before switching to live:
-- [ ] Paper traded for at least 10 trading days
+Repo → **Actions** → click the running job → click **run-bot** → live output streams here
+
+### Sample healthy scan output
+
+```
+================================================================
+  VWAP + EMA + RSI Trading Bot  —  PAPER mode
+  Endpoint  : https://paper-api.alpaca.markets
+  Run ID    : 9876543210
+  Watchlist : ['NBIS', 'NVDA', 'TSLA', 'AAPL', 'MSFT']
+================================================================
+Market status: Market open — 10:15 AM ET
+Account  →  Portfolio: $52,430.00  |  Buying power: $48,100.00
+Open positions: 1 / 3
+Trade records (last 7 days): 4 total  |  LONG=3  SHORT=1
+--- Scanning 5 stocks ---
+NBIS: ✓ LONG  —  Price $255.0  |  VWAP $248.12  |  RSI 52.3  |  Vol 1,823,400
+NBIS: Reason → Price 255.0 > VWAP 248.12  |  EMA9 261.4 > EMA21 244.8  |  RSI 52.3 in [45–62]
+================================================================
+  SIGNAL  NBIS  LONG  (PAPER)
+  Entry : $255.0   Qty : 45 shares
+  Stop  : $247.0   Risk : $360.0
+  T1    : $271.0  (22 shares — 50 %)
+  T2    : $279.0  (23 shares — remaining)
+================================================================
+NVDA: — NONE  —  Price $890.0  |  VWAP $875.0  |  RSI 67.1  |  Vol 5,200,000
+NVDA: No signal → RSI 67.1 outside zone
+================================================================
+  Scan complete  |  Trades placed this run: 1
+  Total open positions: 2 / 3
+================================================================
+```
+
+### Sample market-closed output
+
+```
+Market status: Market closed — next open: Mon Jun 08 09:30 AM ET
+Nothing to do — exiting cleanly.
+Trade records (last 7 days): 4 total  |  LONG=3  SHORT=1
+```
+
+---
+
+## 11. How to go live
+
+**Do not go live until you have paper traded for at least 10 trading days.**
+
+### Checklist
+
+- [ ] Paper traded ≥ 10 days
 - [ ] Reviewed every trade in the log — understand why each signal fired
-- [ ] Win rate above 55% on paper results
-- [ ] Comfortable with the position sizes being placed
+- [ ] Win rate ≥ 55% on paper results
+- [ ] Comfortable with position sizes
 - [ ] Alpaca live account funded
+- [ ] Live API keys added to GitHub Secrets
 
-To switch to live mode — 3 things to do:
+### Steps
 
-**1. Add your live API keys to GitHub Secrets** (if not already done)
+1. Add live keys to GitHub Secrets (`ALPACA_LIVE_API_KEY`, `ALPACA_LIVE_API_SECRET`)
+2. For **manual live runs**: trigger workflow → set `paper_mode = false`, set `live_capital_limit`
+3. For **scheduled live runs**: add a GitHub Secret `LIVE_CAPITAL_LIMIT` = your dollar limit, and change the workflow default:
 
-Go to repo → Settings → Secrets and variables → Actions → add:
-- `ALPACA_LIVE_API_KEY` — your live account API Key ID
-- `ALPACA_LIVE_API_SECRET` — your live account Secret Key
-
-Get live keys at: https://app.alpaca.markets → switch to **Live** account (top left toggle) → API Keys
-
-**2. Change PAPER_MODE default in the workflow**
-
-Open `.github/workflows/trade.yml`, find:
 ```yaml
-default: 'true'
-```
-Change to:
-```yaml
-default: 'false'
-```
-Commit and push.
-
-**3. Confirm in the log**
-
-On the next run you should see:
-```
-INFO  Strategy bot starting — LIVE mode
-INFO  Endpoint : https://api.alpaca.markets
-INFO  PAPER flag value: PAPER=False (True=paper, False=live)
+# In .github/workflows/trade.yml
+default: 'false'   # was 'true'
 ```
 
-If you still see `paper-api.alpaca.markets` — the change did not take effect. Check the workflow file.
+4. Confirm the first live run log shows:
+```
+Strategy bot starting — LIVE mode
+Endpoint : https://api.alpaca.markets
+```
 
 ---
 
-## 10. How to stop the bot
+## 12. How to stop the bot
 
-### Pause temporarily
-Repo → **Actions** tab → left sidebar → **VWAP EMA RSI Trading Bot** → **...** menu → **Disable workflow**
-
-Re-enable the same way whenever you want it running again.
-
-### Stop permanently
-Delete or rename `.github/workflows/trade.yml` in the repo.
-
-### Cancel a specific run in progress
-Repo → Actions → click the running job → **Cancel workflow**
-
-### Close all open positions immediately
-Log in to Alpaca → Portfolio → select positions → Close. The bot will not re-enter closed positions until the next scan confirms a fresh signal.
+| Action | How |
+|--------|-----|
+| Pause (temporary) | Repo → Actions → left sidebar → bot name → ··· → **Disable workflow** |
+| Resume | Same menu → **Enable workflow** |
+| Cancel one run | Repo → Actions → click running job → **Cancel workflow** |
+| Stop permanently | Delete `.github/workflows/trade.yml` from the repo |
+| Close positions now | Log in to Alpaca → Portfolio → Close positions manually |
 
 ---
 
-## 11. Tuning the parameters
+## 13. How to update the watchlist
 
-All tunable values are at the top of `vwap_ema_rsi_bot.py` (lines 42–72). Edit in GitHub and commit — takes effect on the next run.
+Open `vwap_ema_rsi_bot.py` in GitHub (click the file → pencil icon).
 
-| Parameter | Default | Effect of increasing | Effect of decreasing |
-|-----------|---------|----------------------|----------------------|
-| `RSI_LONG_LOW` | 45 | Fewer long signals (stricter) | More long signals (looser) |
-| `RSI_LONG_HIGH` | 62 | More long signals (looser) | Fewer long signals (stricter) |
-| `RSI_SHORT_LOW` | 38 | More short signals (looser) | Fewer short signals (stricter) |
-| `RSI_SHORT_HIGH` | 55 | Fewer short signals (stricter) | More short signals (looser) |
-| `VOLUME_MULT` | 1.2 | Fewer signals (higher bar) | More signals (lower bar) |
-| `MAX_RISK_PCT` | 0.015 (1.5%) | Larger positions | Smaller positions |
-| `TARGET1_MULT` | 2.0 | Harder to reach T1 | Easier to reach T1 |
-| `TARGET2_MULT` | 3.0 | Harder to reach T2 | Easier to reach T2 |
-| `MAX_OPEN_TRADES` | 3 | More simultaneous trades | Fewer simultaneous trades |
-| `MARKET_OPEN_BUFFER_MIN` | 15 | Longer wait after open | Shorter wait after open |
+Find line ~60:
+```python
+WATCHLIST: list[str] = ["NBIS", "NVDA", "TSLA", "AAPL", "MSFT"]
+```
 
-**Recommended**: Do not change any parameter until you have at least 20 trades of paper data. Changes should be tested on paper before going live.
+Edit, commit — the next scheduled run picks it up automatically.
+
+**Tips:**
+- Use only US stock tickers (Alpaca US equities)
+- Minimum 1M average daily volume for reliable fills
+- Avoid stocks under $10 (wide spreads, erratic VWAP)
+- Remove a stock on its earnings day — news overrides technicals
+- 5–10 stocks is the sweet spot
 
 ---
 
-## 12. Understanding the log output
+## 14. Tuning parameters
 
-```
-2026-06-02 10:15:00  INFO     === Scan start === Portfolio: $52,430.00 | Open trades: 1/3
-2026-06-02 10:15:01  INFO     NBIS : LONG  | Price $255.0 | RSI 52.3 | Price $255 > VWAP $248.12 | EMA9 261.4 > EMA21 244.8 | RSI 52.3 in [45–62] | Volume 1,823,400 > avg 1,512,000
-2026-06-02 10:15:01  INFO     ============================================================
-2026-06-02 10:15:01  INFO       TRADE SIGNAL  NBIS  LONG
-2026-06-02 10:15:01  INFO       Entry: $255.0  |  Qty: 45 shares
-2026-06-02 10:15:01  INFO       Stop:  $247.0  |  T1: $271.0  |  T2: $279.0
-2026-06-02 10:15:02  INFO     NBIS: Entry order submitted — ID abc123
-2026-06-02 10:15:02  INFO     NBIS: Stop loss @ $247.0 — ID def456
-2026-06-02 10:15:02  INFO     NBIS: Target 1 @ $271.0 (22 shares) — ID ghi789
-2026-06-02 10:15:02  INFO     NBIS: Target 2 @ $279.0 (23 shares) — ID jkl012
-2026-06-02 10:15:03  INFO     NVDA : NONE  | Price $890.0 | RSI 67.1 | RSI 67.1 outside entry zones
-2026-06-02 10:15:04  INFO     TSLA : NONE  | Price $175.0 | RSI 44.2 | Price at VWAP — no clear side
-2026-06-02 10:15:05  INFO     === Scan complete ===
-```
+All values are at the top of `vwap_ema_rsi_bot.py`. Edit and push — live on next run.
 
-| Log item | Meaning |
+| Parameter | Default | Increasing → | Decreasing → |
+|-----------|---------|-------------|-------------|
+| `RSI_LONG_LOW` | 45 | Fewer long signals | More long signals |
+| `RSI_LONG_HIGH` | 62 | More long signals | Fewer long signals |
+| `RSI_SHORT_LOW` | 38 | More short signals | Fewer short signals |
+| `RSI_SHORT_HIGH` | 55 | Fewer short signals | More short signals |
+| `VOLUME_MULT` | 1.2 | Higher bar, fewer signals | Lower bar, more signals |
+| `MAX_RISK_PCT` | 0.015 | Larger positions | Smaller positions |
+| `TARGET1_MULT` | 2.0 | T1 harder to reach | T1 easier to reach |
+| `TARGET2_MULT` | 3.0 | T2 harder to reach | T2 easier to reach |
+| `MAX_OPEN_TRADES` | 3 | More concurrent trades | Fewer concurrent trades |
+| `MARKET_OPEN_BUFFER_MIN` | 15 | Longer wait after open | Shorter wait |
+| `MARKET_CLOSE_BUFFER_MIN` | 30 | Stop earlier | Stop later |
+
+**Rule: do not change any parameter until you have 20+ paper trades of data.**
+
+---
+
+## 15. Reading the log output
+
+| Log text | Meaning |
 |----------|---------|
-| `Scan start` | Bot woke up and market is open |
-| `LONG` / `SHORT` | Signal found — trade placed |
-| `NONE` | No signal — reason given |
-| `Outside trading window` | Bot ran but market closed or in buffer zone |
-| `Already in position` | Stock already has an open trade — skipped |
-| `Max open trades reached` | 3 trades already open — scan skipped |
-| Order IDs | Alpaca order IDs — use these to look up trades in Alpaca UI |
+| `PAPER mode` / `LIVE mode` | Confirms which account type is active |
+| `Endpoint: https://paper-api...` | Paper keys and URL confirmed |
+| `Endpoint: https://api.alpaca...` | Live keys and URL confirmed |
+| `Market closed — next open: ...` | Outside market hours — nothing done |
+| `Opening buffer active` | Within first 15 min of open — waiting |
+| `Closing buffer active` | Within last 30 min — no new trades |
+| `✓ LONG` / `✓ SHORT` | Signal confirmed — trade being placed |
+| `— NONE` | No signal — reason shown on next line |
+| `Already open — skipped` | Position already exists for this stock |
+| `Max trade limit reached` | 3 trades already open — scan stops |
+| `Trade record saved` | Record written to trade_records.json |
+| `Capital confirmation passed` | Live mode check passed — safe to trade |
+| `CONFIG ERROR` | Missing key or bad config — bot aborts |
+| `Order placement failed` | Alpaca rejected the order — see error detail |
 
 ---
 
-## 13. Free tier limits
+## 16. Free tier limits
 
 | Resource | Free allowance | This bot uses | Status |
 |----------|---------------|---------------|--------|
-| GitHub Actions minutes | 2,000 min/month | ~1,100 min/month | Safe ✓ |
-| GitHub Actions storage | 500 MB | < 1 MB | Safe ✓ |
-| GitHub private repos | Unlimited | 1 | Safe ✓ |
+| GitHub Actions minutes | 2,000 / month | ~1,100 / month | Safe ✓ |
+| GitHub Secrets | Unlimited | 4 secrets | Safe ✓ |
+| GitHub Artifacts storage | 500 MB | < 1 MB / run | Safe ✓ |
+| Artifact retention | 30 days | 30 days set | Safe ✓ |
 | Alpaca paper trading | Free forever | — | Safe ✓ |
 | Alpaca live trading | Free (no commission) | — | Safe ✓ |
 
-Calculation: 2 min/run × 26 runs/day × 21 trading days = 1,092 min/month
+Calculation: 2 min/run × 26 runs/day × 21 trading days = **1,092 min/month**
 
 ---
 
-## 14. Disclaimer
+## 17. Disclaimer
 
-This bot is for educational and personal use. Automated trading carries significant financial risk. Past performance of a strategy does not guarantee future results. Always paper trade before using real money. You are solely responsible for any trades placed by this bot on your account. The authors of this code accept no liability for financial losses.
+This software is provided for educational and personal use only. Automated
+trading carries significant financial risk. Past performance of a strategy
+does not guarantee future results. Always paper trade before using real money.
+You are solely responsible for all trades placed by this bot on your account.
+The authors accept no liability for financial losses of any kind.
 
 **Never risk money you cannot afford to lose.**
