@@ -7,478 +7,618 @@
 <style>
 :root{
   --bg:#f7f6f1;--card:#fff;--border:#e4e2db;--text:#1a1918;--muted:#706f69;
-  --green:#27500A;--gbg:#eaf3de;--gborder:#97C459;
-  --red:#791F1F;--rbg:#fcebeb;--rborder:#F09595;
-  --blue:#0C447C;--bbg:#E6F1FB;--bborder:#85B7EB;
-  --amber:#633806;--ambg:#FAEEDA;--amborder:#EF9F27;
-  --purple:#3C3489;--pbg:#EEEDFE;--pborder:#AFA9EC;
-  --r:10px;--rsm:6px;
+  --green:#27500A;--gbg:#eaf3de;--gbd:#97C459;
+  --red:#791F1F;--rbg:#fcebeb;--rbd:#F09595;
+  --blue:#0C447C;--bbg:#E6F1FB;--bbd:#85B7EB;
+  --amber:#633806;--abg:#FAEEDA;--abd:#EF9F27;
+  --purple:#3C3489;--pbg:#EEEDFE;--pbd:#AFA9EC;
+  --r:10px;--rs:6px;
 }
-@media(prefers-color-scheme:dark){
-  :root{
-    --bg:#1a1918;--card:#242320;--border:#3a3834;--text:#e8e6df;--muted:#9c9a92;
-    --green:#97C459;--gbg:#0e2105;--gborder:#3B6D11;
-    --red:#F09595;--rbg:#2a0a0a;--rborder:#791F1F;
-    --blue:#85B7EB;--bbg:#041828;--bborder:#0C447C;
-    --amber:#EF9F27;--ambg:#1e0f02;--amborder:#633806;
-    --purple:#AFA9EC;--pbg:#0f0d2a;--pborder:#3C3489;
-  }
-}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1918;--card:#242320;--border:#3a3834;--text:#e8e6df;--muted:#9c9a92;
+  --green:#97C459;--gbg:#0e2105;--gbd:#3B6D11;
+  --red:#F09595;--rbg:#2a0a0a;--rbd:#791F1F;
+  --blue:#85B7EB;--bbg:#041828;--bbd:#0C447C;
+  --amber:#EF9F27;--abg:#1e0f02;--abd:#633806;
+  --purple:#AFA9EC;--pbg:#0f0d2a;--pbd:#3C3489;
+}}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
-
-.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.logo{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:11px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.logo{font-size:15px;font-weight:600}
 .logo span{color:var(--muted);font-weight:400}
-.topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.pulse{width:8px;height:8px;border-radius:50%;background:#639922;display:inline-block;margin-right:5px;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.pill{font-size:12px;padding:3px 11px;border-radius:20px;font-weight:500;border:1px solid}
-.pill-open{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
-.pill-closed{background:var(--bg);color:var(--muted);border-color:var(--border)}
-.pill-weekend{background:var(--ambg);color:var(--amber);border-color:var(--amborder)}
+.tb-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pulse{width:7px;height:7px;border-radius:50%;background:#639922;display:inline-block;margin-right:4px;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.pill{font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500;border:1px solid}
+.p-open{background:var(--gbg);color:var(--green);border-color:var(--gbd)}
+.p-closed{background:var(--bg);color:var(--muted);border-color:var(--border)}
+.p-weekend{background:var(--abg);color:var(--amber);border-color:var(--abd)}
 #clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.refresh-btn{padding:5px 13px;border-radius:var(--rsm);font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);white-space:nowrap}
-.refresh-btn:hover{background:var(--bg)}
+.rbtn{padding:5px 12px;border-radius:var(--rs);font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text)}
+.rbtn:hover{background:var(--bg)}
 
-.main{max-width:1280px;margin:0 auto;padding:20px 16px}
-.section-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.main{max-width:1320px;margin:0 auto;padding:18px 16px}
+.slabel{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 
-/* loading / error */
-.status-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r);margin-bottom:18px;font-size:13px;border:1px solid}
-.status-loading{background:var(--bbg);border-color:var(--bborder);color:var(--blue)}
-.status-error{background:var(--rbg);border-color:var(--rborder);color:var(--red)}
-.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* status */
+.sbar{display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:var(--r);margin-bottom:16px;font-size:13px;border:1px solid}
+.s-loading{background:var(--bbg);border-color:var(--bbd);color:var(--blue)}
+.s-error{background:var(--rbg);border-color:var(--rbd);color:var(--red)}
+.s-ok{background:var(--gbg);border-color:var(--gbd);color:var(--green)}
+.spin{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
 
 /* metrics */
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:22px}
-.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
-.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
-.metric-value{font-size:24px;font-weight:600;line-height:1}
-.metric-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px;margin-bottom:20px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.ml{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.mv{font-size:22px;font-weight:600;line-height:1}
+.ms{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab{padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);margin-bottom:-1px;transition:all .15s}
+.tab.on{color:var(--text);border-bottom-color:var(--text)}
+.tab:hover{color:var(--text)}
 
 /* toolbar */
-.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
-.filters{display:flex;gap:6px;flex-wrap:wrap}
-.f-btn{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s;font-weight:500}
-.f-btn.on{background:var(--text);color:var(--card);border-color:var(--text)}
-.search{padding:6px 11px;border:1px solid var(--border);border-radius:var(--rsm);font-size:12px;background:var(--card);color:var(--text);min-width:150px}
-.search:focus{outline:none;border-color:var(--blue)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.filters{display:flex;gap:5px;flex-wrap:wrap}
+.fb{padding:4px 11px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);font-weight:500;transition:all .15s}
+.fb.on{background:var(--text);color:var(--card);border-color:var(--text)}
+.srch{padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;background:var(--card);color:var(--text);min-width:140px}
+.srch:focus{outline:none;border-color:var(--blue)}
 
 /* table */
-.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1060px}
-th{text-align:left;padding:10px 13px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap;cursor:pointer;user-select:none}
+.tcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:6px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap;cursor:pointer;user-select:none}
 th:hover{color:var(--text)}
-th.asc::after{content:" ↑"}
-th.desc::after{content:" ↓"}
-td{padding:11px 13px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+th.asc::after{content:" ↑"}th.desc::after{content:" ↓"}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
 tr:last-child td{border-bottom:none}
-tr.clickable:hover td{background:var(--bg);cursor:pointer}
+tr.click:hover td{background:var(--bg);cursor:pointer}
 .sym{font-weight:600;font-size:14px}
 .mono{font-family:monospace;font-size:12px}
 
 /* tags */
 .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid}
-.tg-long{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
-.tg-short{background:var(--rbg);color:var(--red);border-color:var(--rborder)}
-.tg-paper{background:var(--bbg);color:var(--blue);border-color:var(--bborder)}
-.tg-live{background:var(--rbg);color:var(--red);border-color:var(--rborder)}
-.tg-vwap{background:var(--pbg);color:var(--purple);border-color:var(--pborder)}
-.tg-orb{background:var(--ambg);color:var(--amber);border-color:var(--amborder)}
-.tg-open{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
-.tg-error{background:var(--rbg);color:var(--red);border-color:var(--rborder)}
-.tg-yes{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
-.tg-no{background:var(--bg);color:var(--muted);border-color:var(--border)}
+.t-long{background:var(--gbg);color:var(--green);border-color:var(--gbd)}
+.t-short{background:var(--rbg);color:var(--red);border-color:var(--rbd)}
+.t-paper{background:var(--bbg);color:var(--blue);border-color:var(--bbd)}
+.t-live{background:var(--rbg);color:var(--red);border-color:var(--rbd)}
+.t-vwap{background:var(--pbg);color:var(--purple);border-color:var(--pbd)}
+.t-orb{background:var(--abg);color:var(--amber);border-color:var(--abd)}
+.t-ok{background:var(--gbg);color:var(--green);border-color:var(--gbd)}
+.t-open{background:var(--gbg);color:var(--green);border-color:var(--gbd)}
+.t-error{background:var(--rbg);color:var(--red);border-color:var(--rbd)}
+.t-closed{background:var(--abg);color:var(--amber);border-color:var(--abd)}
+.t-none{background:var(--bg);color:var(--muted);border-color:var(--border)}
+.t-yes{background:var(--gbg);color:var(--green);border-color:var(--gbd)}
+.t-no{background:var(--bg);color:var(--muted);border-color:var(--border)}
 
-/* timestamp cell */
+/* scan mini-table inside run drawer */
+.scan-grid{display:grid;grid-template-columns:auto auto auto auto auto auto 1fr;gap:0;font-size:12px;margin-top:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border)}
+.sg-hdr{background:var(--bg);font-weight:600;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:6px 10px;border-bottom:1px solid var(--border)}
+.sg-cell{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+.sg-cell.last,.sg-hdr.last{border-bottom:none}
+
+/* timestamp */
 .ts-date{font-size:12px;font-weight:500}
 .ts-time{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 .ts-ago{font-size:10px;color:var(--muted);margin-top:1px}
 
+/* status icon */
+.si{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+.si-ok{background:#639922}.si-err{background:#E24B4A}.si-warn{background:#EF9F27}.si-info{background:#378ADD}
+
 /* drawer */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .overlay.open{display:flex}
-.drawer{background:var(--card);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;padding:24px}
-.drawer-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.drawer-title{font-size:16px;font-weight:600}
-.close-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
-.close-btn:hover{color:var(--text)}
-
-/* timestamp highlight box */
-.ts-hero{background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:14px 16px;margin-bottom:18px}
-.ts-hero-full{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px}
-.ts-hero-sub{font-size:12px;color:var(--muted)}
-.ts-hero-runid{font-family:monospace;font-size:11px;color:var(--muted);margin-top:3px}
-
-.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.drow{padding:9px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:3px}
-.drow:last-child{border-bottom:none}
-.dlabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.dval{font-size:14px;font-weight:500}
-
-.signal-box{background:var(--bg);border-radius:var(--rsm);padding:11px 13px;font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px;font-family:monospace;word-break:break-word;white-space:pre-wrap}
-.signal-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:16px;margin-bottom:6px}
-
-.order-grid{display:grid;grid-template-columns:auto 1fr;gap:0}
-.orow{display:contents}
-.orow span{padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
-.orow span:first-child{color:var(--muted);padding-right:16px}
-.orow span:last-child{font-family:monospace;font-size:11px;color:var(--text);word-break:break-all}
-.orow:last-child span{border-bottom:none}
-
-.footer{font-size:11px;color:var(--muted);padding:12px 0 6px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
-.last-updated{font-size:11px;color:var(--muted)}
-
-@media(max-width:600px){
-  .topbar{padding:10px 14px}
-  .main{padding:14px 10px}
-  .detail-grid{grid-template-columns:1fr}
-}
+.drawer{background:var(--card);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:740px;max-height:92vh;overflow-y:auto;padding:22px}
+.dhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.dtitle{font-size:15px;font-weight:600}
+.xbtn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;color:var(--muted);line-height:1}
+.ts-hero{background:var(--bg);border:1px solid var(--border);border-radius:var(--rs);padding:13px 15px;margin-bottom:16px}
+.ts-full{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px}
+.ts-sub{font-size:12px;color:var(--muted)}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.dr{padding:8px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+.dr:last-child{border-bottom:none}
+.dl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.dv{font-size:14px;font-weight:500}
+.sig-box{background:var(--bg);border-radius:var(--rs);padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px;font-family:monospace;word-break:break-word;white-space:pre-wrap}
+.slbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:14px;margin-bottom:6px}
+.ogrid{display:grid;grid-template-columns:auto 1fr;gap:0}
+.or{display:contents}
+.or span{padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.or span:first-child{color:var(--muted);padding-right:14px;white-space:nowrap}
+.or span:last-child{font-family:monospace;font-size:11px;word-break:break-all}
+.or:last-child span{border-bottom:none}
+.footer{font-size:11px;color:var(--muted);padding:10px 0 4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+@media(max-width:600px){.topbar{padding:9px 12px}.main{padding:12px 8px}.dg{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="logo">Trading Bot <span>Dashboard</span></div>
-  <div class="topbar-right">
+  <div class="tb-right">
     <span id="clock"></span>
-    <span class="pill" id="market-pill">—</span>
-    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    <span class="pill" id="mpill">—</span>
+    <button class="rbtn" onclick="loadAll()">↻ Refresh</button>
   </div>
 </div>
 
 <div class="main">
 
-  <!-- Status bar (loading / error) -->
-  <div class="status-bar status-loading" id="status-bar">
-    <div class="spinner"></div>
-    <span id="status-msg">Loading trade records...</span>
+  <div class="sbar s-loading" id="sbar">
+    <div class="spin"></div>
+    <span id="smsg">Loading…</span>
   </div>
 
-  <!-- Metrics -->
-  <div id="metrics-wrap" style="display:none">
-    <div class="section-label">Summary — last 7 days</div>
+  <!-- Metrics row -->
+  <div id="mwrap" style="display:none">
+    <div class="slabel">Summary — last 7 days</div>
     <div class="metrics">
-      <div class="metric"><div class="metric-label">Total trades</div><div class="metric-value" id="m-total">—</div><div class="metric-sub">this week</div></div>
-      <div class="metric"><div class="metric-label">Long</div><div class="metric-value" id="m-long" style="color:var(--green)">—</div><div class="metric-sub">buy entries</div></div>
-      <div class="metric"><div class="metric-label">Short</div><div class="metric-value" id="m-short" style="color:var(--red)">—</div><div class="metric-sub">sell entries</div></div>
-      <div class="metric"><div class="metric-label">ORB</div><div class="metric-value" id="m-orb" style="color:var(--amber)">—</div><div class="metric-sub">opening breakout</div></div>
-      <div class="metric"><div class="metric-label">VWAP</div><div class="metric-value" id="m-vwap" style="color:var(--purple)">—</div><div class="metric-sub">mean reversion</div></div>
-      <div class="metric"><div class="metric-label">Confirmed</div><div class="metric-value" id="m-conf" style="color:var(--green)">—</div><div class="metric-sub">2-bar filter</div></div>
-      <div class="metric"><div class="metric-label">Paper</div><div class="metric-value" id="m-paper" style="color:var(--blue)">—</div><div class="metric-sub">simulated</div></div>
-      <div class="metric"><div class="metric-label">Live</div><div class="metric-value" id="m-live" style="color:var(--red)">—</div><div class="metric-sub">real money</div></div>
-      <div class="metric"><div class="metric-label">Risk deployed</div><div class="metric-value" id="m-risk">—</div><div class="metric-sub">USD at risk</div></div>
-      <div class="metric"><div class="metric-label">Errors</div><div class="metric-value" id="m-err" style="color:var(--red)">—</div><div class="metric-sub">failed orders</div></div>
+      <div class="metric"><div class="ml">Bot runs</div><div class="mv" id="m-runs">—</div><div class="ms">total runs</div></div>
+      <div class="metric"><div class="ml">Market open runs</div><div class="mv" id="m-open-runs" style="color:var(--green)">—</div><div class="ms">scanned watchlist</div></div>
+      <div class="metric"><div class="ml">Trades placed</div><div class="mv" id="m-trades">—</div><div class="ms">orders sent</div></div>
+      <div class="metric"><div class="ml">Signals found</div><div class="mv" id="m-sigs" style="color:var(--amber)">—</div><div class="ms">before 2-bar filter</div></div>
+      <div class="metric"><div class="ml">Long</div><div class="mv" id="m-long" style="color:var(--green)">—</div><div class="ms">buy entries</div></div>
+      <div class="metric"><div class="ml">Short</div><div class="mv" id="m-short" style="color:var(--red)">—</div><div class="ms">sell entries</div></div>
+      <div class="metric"><div class="ml">ORB</div><div class="mv" id="m-orb" style="color:var(--amber)">—</div><div class="ms">opening breakout</div></div>
+      <div class="metric"><div class="ml">VWAP</div><div class="mv" id="m-vwap" style="color:var(--purple)">—</div><div class="ms">mean reversion</div></div>
+      <div class="metric"><div class="ml">Risk deployed</div><div class="mv" id="m-risk">—</div><div class="ms">USD at risk</div></div>
+      <div class="metric"><div class="ml">Errors</div><div class="mv" id="m-err" style="color:var(--red)">—</div><div class="ms">failed orders/runs</div></div>
     </div>
   </div>
 
-  <!-- Table -->
-  <div id="table-wrap" style="display:none">
-    <div class="toolbar">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <div class="section-label" style="margin:0">All trades</div>
-        <div class="filters">
-          <button class="f-btn on" onclick="filt('ALL',this)">All</button>
-          <button class="f-btn" onclick="filt('LONG',this)">Long</button>
-          <button class="f-btn" onclick="filt('SHORT',this)">Short</button>
-          <button class="f-btn" onclick="filt('ORB',this)">ORB</button>
-          <button class="f-btn" onclick="filt('VWAP',this)">VWAP</button>
-          <button class="f-btn" onclick="filt('PAPER',this)">Paper</button>
-          <button class="f-btn" onclick="filt('LIVE',this)">Live</button>
-          <button class="f-btn" onclick="filt('ERROR',this)">Errors</button>
+  <!-- Tabs -->
+  <div id="content" style="display:none">
+    <div class="tabs">
+      <div class="tab on" onclick="switchTab('runs',this)">Run history</div>
+      <div class="tab" onclick="switchTab('trades',this)">Trades</div>
+    </div>
+
+    <!-- Runs tab -->
+    <div id="tab-runs">
+      <div class="toolbar">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="slabel" style="margin:0">Every bot run</div>
+          <div class="filters">
+            <button class="fb on" onclick="fRun('ALL',this)">All</button>
+            <button class="fb" onclick="fRun('OK',this)">Traded</button>
+            <button class="fb" onclick="fRun('MARKET_CLOSED',this)">Closed</button>
+            <button class="fb" onclick="fRun('ERROR',this)">Errors</button>
+          </div>
         </div>
       </div>
-      <input class="search" id="search" placeholder="Search symbol…" oninput="renderTable()">
-    </div>
-    <div class="table-card">
-      <div class="table-wrap">
-        <table>
+      <div class="tcard"><div class="twrap">
+        <table id="run-table">
           <thead><tr>
-            <th onclick="sort('timestamp')" data-col="timestamp">Timestamp (ET)</th>
-            <th onclick="sort('symbol')" data-col="symbol">Symbol</th>
-            <th>Direction</th>
-            <th>Strategy</th>
-            <th>Mode</th>
-            <th onclick="sort('entry_price')" data-col="entry_price">Entry $</th>
-            <th onclick="sort('stop_price')" data-col="stop_price">Stop $</th>
-            <th>Target 1</th>
-            <th>Target 2</th>
-            <th onclick="sort('qty')" data-col="qty">Qty</th>
-            <th onclick="sort('risk_dollars')" data-col="risk_dollars">Risk $</th>
-            <th>Confirmed</th>
+            <th onclick="sortR('timestamp')" data-col="timestamp">Timestamp (ET)</th>
             <th>Status</th>
+            <th>Mode</th>
+            <th onclick="sortR('portfolio_value')" data-col="portfolio_value">Portfolio $</th>
+            <th>Open positions</th>
+            <th onclick="sortR('signals_found')" data-col="signals_found">Signals</th>
+            <th onclick="sortR('trades_placed')" data-col="trades_placed">Trades placed</th>
+            <th>Guardrail blocks</th>
+            <th>Timing</th>
             <th></th>
           </tr></thead>
-          <tbody id="tbody"></tbody>
+          <tbody id="run-tbody"></tbody>
         </table>
-      </div>
+      </div></div>
+      <div class="footer"><span id="run-count"></span><span id="run-fetched"></span></div>
     </div>
-    <div class="footer">
-      <span id="row-count"></span>
-      <span class="last-updated" id="last-updated"></span>
+
+    <!-- Trades tab -->
+    <div id="tab-trades" style="display:none">
+      <div class="toolbar">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="slabel" style="margin:0">Executed trades</div>
+          <div class="filters">
+            <button class="fb on" onclick="fTrade('ALL',this)">All</button>
+            <button class="fb" onclick="fTrade('LONG',this)">Long</button>
+            <button class="fb" onclick="fTrade('SHORT',this)">Short</button>
+            <button class="fb" onclick="fTrade('ORB',this)">ORB</button>
+            <button class="fb" onclick="fTrade('VWAP',this)">VWAP</button>
+            <button class="fb" onclick="fTrade('PAPER',this)">Paper</button>
+            <button class="fb" onclick="fTrade('LIVE',this)">Live</button>
+            <button class="fb" onclick="fTrade('ERROR',this)">Errors</button>
+          </div>
+        </div>
+        <input class="srch" id="tsrch" placeholder="Search symbol…" oninput="renderTrades()">
+      </div>
+      <div class="tcard"><div class="twrap">
+        <table>
+          <thead><tr>
+            <th onclick="sortT('timestamp')" data-col="timestamp">Timestamp (ET)</th>
+            <th onclick="sortT('symbol')" data-col="symbol">Symbol</th>
+            <th>Direction</th><th>Strategy</th><th>Mode</th>
+            <th onclick="sortT('entry_price')" data-col="entry_price">Entry $</th>
+            <th>Stop $</th><th>T1 $</th><th>T2 $</th>
+            <th onclick="sortT('qty')" data-col="qty">Qty</th>
+            <th onclick="sortT('risk_dollars')" data-col="risk_dollars">Risk $</th>
+            <th>Confirmed</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="trade-tbody"></tbody>
+        </table>
+      </div></div>
+      <div class="footer"><span id="trade-count"></span></div>
     </div>
   </div>
 
 </div>
 
 <!-- Drawer -->
-<div class="overlay" id="overlay" onclick="closeDrawer(event)">
+<div class="overlay" id="overlay" onclick="closeD(event)">
   <div class="drawer">
-    <div class="drawer-hdr">
-      <div class="drawer-title" id="drawer-title">Trade detail</div>
-      <button class="close-btn" onclick="closeDrawer()">×</button>
+    <div class="dhdr">
+      <div class="dtitle" id="dtitle">Detail</div>
+      <button class="xbtn" onclick="closeD()">×</button>
     </div>
-    <div id="drawer-body"></div>
+    <div id="dbody"></div>
   </div>
 </div>
 
 <script>
-// ── Config — points to YOUR repo's raw file, no token needed ──────────────
-const RAW_URL = "https://raw.githubusercontent.com/gajjela521/trading-bot/main/trade_records.json";
-const CACHE_BUST = () => RAW_URL + "?t=" + Date.now();
+const REPO = "gajjela521/trading-bot";
+const BRANCH = "main";
+const raw = f => `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${f}?t=${Date.now()}`;
 
-// ── State ──────────────────────────────────────────────────────────────────
-let all = [], sortCol = "timestamp", sortDir = "desc", activeFilt = "ALL";
+let runs=[], trades=[];
+let rSortCol="timestamp", rSortDir="desc", rFilt="ALL";
+let tSortCol="timestamp", tSortDir="desc", tFilt="ALL";
+let activeTab="runs";
 
-// ── Clock + market status ──────────────────────────────────────────────────
-function tick() {
-  const now = new Date();
-  document.getElementById("clock").textContent =
-    now.toLocaleString("en-US", {
-      timeZone: "America/New_York", weekday: "short", month: "short",
-      day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
-    }) + " ET";
-  const day  = now.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short" });
-  const h    = +now.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false });
-  const m    = +now.toLocaleString("en-US", { timeZone: "America/New_York", minute: "numeric" });
-  const mins = h * 60 + m, wd = !["Sat","Sun"].includes(day);
-  const p = document.getElementById("market-pill");
-  if (!wd)               { p.textContent = "Weekend";       p.className = "pill pill-weekend"; }
-  else if (mins >= 570 && mins < 960) { p.textContent = "● Market open"; p.className = "pill pill-open"; }
-  else                   { p.textContent = "Market closed"; p.className = "pill pill-closed"; }
+// ── Clock ──────────────────────────────────────────────────────────────────
+function tick(){
+  const now=new Date();
+  document.getElementById("clock").textContent=
+    now.toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true})+" ET";
+  const day=now.toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short"});
+  const h=+now.toLocaleString("en-US",{timeZone:"America/New_York",hour:"numeric",hour12:false});
+  const m=+now.toLocaleString("en-US",{timeZone:"America/New_York",minute:"numeric"});
+  const mins=h*60+m, wd=!["Sat","Sun"].includes(day);
+  const p=document.getElementById("mpill");
+  if(!wd){p.textContent="Weekend";p.className="pill p-weekend";}
+  else if(mins>=570&&mins<960){p.textContent="● Market open";p.className="pill p-open";}
+  else{p.textContent="Market closed";p.className="pill p-closed";}
 }
-setInterval(tick, 1000); tick();
+setInterval(tick,1000);tick();
 
-// ── Load data ──────────────────────────────────────────────────────────────
-async function loadData() {
-  setStatus("loading", "Loading trade records…");
-  try {
-    const res = await fetch(CACHE_BUST());
-    if (!res.ok) throw new Error("HTTP " + res.status + " — file may not exist yet");
-    const records = await res.json();
-    const cutoff  = Date.now() - 7 * 864e5;
-    all = records.filter(r => {
-      try { return new Date(r.timestamp).getTime() >= cutoff; } catch { return true; }
-    });
+// ── Load ───────────────────────────────────────────────────────────────────
+function setStatus(type,msg){
+  const el=document.getElementById("sbar");
+  el.style.display="flex";
+  el.className="sbar s-"+type;
+  el.innerHTML=(type==="loading"?'<div class="spin"></div>':'<span style="font-size:15px">'+(type==="error"?"⚠":"✓")+"</span>")
+    +"<span>"+msg+"</span>";
+}
+function hideStatus(){document.getElementById("sbar").style.display="none";}
+
+async function loadAll(){
+  setStatus("loading","Loading run history and trades…");
+  try{
+    const [rRes, tRes]=await Promise.all([
+      fetch(raw("run_log.json")),
+      fetch(raw("trade_records.json")),
+    ]);
+    const cutoff=Date.now()-7*864e5;
+    const filt=arr=>arr.filter(r=>{try{return new Date(r.timestamp).getTime()>=cutoff;}catch{return true;}});
+
+    if(rRes.ok) runs=filt(await rRes.json());
+    else if(rRes.status===404) runs=[];
+    else throw new Error("run_log.json: HTTP "+rRes.status);
+
+    if(tRes.ok) trades=filt(await tRes.json());
+    else if(tRes.status===404) trades=[];
+    else throw new Error("trade_records.json: HTTP "+tRes.status);
+
     hideStatus();
     renderMetrics();
-    renderTable();
-    document.getElementById("metrics-wrap").style.display = "";
-    document.getElementById("table-wrap").style.display = "";
-    document.getElementById("last-updated").textContent =
-      "Updated: " + new Date().toLocaleTimeString("en-US", {
-        timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true
-      }) + " ET";
-  } catch(e) {
-    setStatus("error",
-      all.length
-        ? "Refresh failed (" + e.message + ") — showing cached data"
-        : "Could not load records: " + e.message + ". The bot may not have run yet today.");
+    renderRuns();
+    renderTrades();
+    document.getElementById("mwrap").style.display="";
+    document.getElementById("content").style.display="";
+    document.getElementById("run-fetched").textContent=
+      "Updated: "+new Date().toLocaleTimeString("en-US",{timeZone:"America/New_York",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true})+" ET";
+  }catch(e){
+    setStatus("error","Load failed: "+e.message+" — have you pushed run_log.json to the repo yet?");
   }
 }
 
-function setStatus(type, msg) {
-  const el = document.getElementById("status-bar");
-  el.style.display = "flex";
-  el.className = "status-bar status-" + type;
-  el.innerHTML = (type === "loading"
-    ? '<div class="spinner"></div>'
-    : '<span style="font-size:16px">⚠</span>')
-    + '<span>' + msg + '</span>';
+// ── Metrics ────────────────────────────────────────────────────────────────
+function renderMetrics(){
+  const r=runs, t=trades;
+  const openRuns=r.filter(x=>x.market_open);
+  const risk=t.reduce((s,x)=>s+(x.risk_dollars||0),0);
+  const errs=r.filter(x=>x.status==="ERROR").length + t.filter(x=>String(x.status||"").startsWith("ERROR")).length;
+  document.getElementById("m-runs").textContent=r.length;
+  document.getElementById("m-open-runs").textContent=openRuns.length;
+  document.getElementById("m-trades").textContent=t.length;
+  document.getElementById("m-sigs").textContent=r.reduce((s,x)=>s+(x.signals_found||0),0);
+  document.getElementById("m-long").textContent=t.filter(x=>x.direction==="LONG").length;
+  document.getElementById("m-short").textContent=t.filter(x=>x.direction==="SHORT").length;
+  document.getElementById("m-orb").textContent=t.filter(x=>x.strategy==="ORB").length;
+  document.getElementById("m-vwap").textContent=t.filter(x=>x.strategy==="VWAP").length;
+  document.getElementById("m-risk").textContent="$"+Math.round(risk).toLocaleString();
+  document.getElementById("m-err").textContent=errs;
 }
-function hideStatus() { document.getElementById("status-bar").style.display = "none"; }
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function switchTab(name,btn){
+  activeTab=name;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+  btn.classList.add("on");
+  document.getElementById("tab-runs").style.display=name==="runs"?"":"none";
+  document.getElementById("tab-trades").style.display=name==="trades"?"":"none";
+}
 
 // ── Timestamp helpers ──────────────────────────────────────────────────────
-function toET(ts) {
-  try {
-    const d = new Date(ts);
-    return {
-      date: d.toLocaleString("en-US", { timeZone:"America/New_York", month:"short", day:"numeric", year:"numeric" }),
-      time: d.toLocaleString("en-US", { timeZone:"America/New_York", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:true }),
-      full: d.toLocaleString("en-US", { timeZone:"America/New_York", weekday:"long", year:"numeric",
-              month:"long", day:"numeric", hour:"2-digit", minute:"2-digit", second:"2-digit",
-              hour12:true, timeZoneName:"short" }),
-      ms: d.getTime(),
+function toET(ts){
+  try{
+    const d=new Date(ts);
+    return{
+      date:d.toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",year:"numeric"}),
+      time:d.toLocaleString("en-US",{timeZone:"America/New_York",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true}),
+      full:d.toLocaleString("en-US",{timeZone:"America/New_York",weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true,timeZoneName:"short"}),
+      ms:d.getTime(),
     };
-  } catch { return { date:"—", time:"—", full:"—", ms:0 }; }
+  }catch{return{date:"—",time:"—",full:"—",ms:0};}
 }
-function ago(ms) {
-  const s = Math.floor((Date.now() - ms) / 1000);
-  if (s < 60)   return s + "s ago";
-  if (s < 3600) return Math.floor(s/60) + "m ago";
-  if (s < 86400)return Math.floor(s/3600) + "h ago";
-  return Math.floor(s/86400) + "d ago";
+function ago(ms){
+  const s=Math.floor((Date.now()-ms)/1000);
+  if(s<60) return s+"s ago";
+  if(s<3600) return Math.floor(s/60)+"m ago";
+  if(s<86400) return Math.floor(s/3600)+"h ago";
+  return Math.floor(s/86400)+"d ago";
 }
-function dollar(v) {
-  return v != null ? "$" + Number(v).toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 }) : "—";
+function dollar(v){return v!=null?"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";}
+function tsCell(ts){return`<div class="ts-date">${ts.date}</div><div class="ts-time">${ts.time}</div><div class="ts-ago">${ago(ts.ms)}</div>`;}
+
+// ── Run status tag ─────────────────────────────────────────────────────────
+function runStatusTag(r){
+  const s=r.status||"";
+  if(s==="OK"&&r.trades_placed>0) return`<span class="tag t-ok">✓ Traded (${r.trades_placed})</span>`;
+  if(s==="OK"&&r.signals_found>0) return`<span class="tag t-ok">✓ Scanned — no confirm</span>`;
+  if(s==="OK")                    return`<span class="tag t-ok">✓ Scanned — no signal</span>`;
+  if(s==="MARKET_CLOSED")         return`<span class="tag t-closed">Market closed</span>`;
+  if(s==="GUARDRAIL_BLOCK")       return`<span class="tag t-closed">Guardrail block</span>`;
+  if(s==="MAX_TRADES")            return`<span class="tag t-closed">Max trades</span>`;
+  if(s==="ERROR")                 return`<span class="tag t-error">Error</span>`;
+  return`<span class="tag t-none">${s||"—"}</span>`;
+}
+function siIcon(r){
+  const s=r.status||"";
+  if(s==="ERROR") return'<span class="si si-err"></span>';
+  if(!r.market_open) return'<span class="si si-info"></span>';
+  if(r.trades_placed>0) return'<span class="si si-ok"></span>';
+  return'<span class="si si-warn"></span>';
 }
 
-// ── Metrics ────────────────────────────────────────────────────────────────
-function renderMetrics() {
-  const r = all, risk = r.reduce((s,x) => s + (x.risk_dollars||0), 0);
-  document.getElementById("m-total").textContent = r.length;
-  document.getElementById("m-long").textContent  = r.filter(x => x.direction === "LONG").length;
-  document.getElementById("m-short").textContent = r.filter(x => x.direction === "SHORT").length;
-  document.getElementById("m-orb").textContent   = r.filter(x => x.strategy  === "ORB").length;
-  document.getElementById("m-vwap").textContent  = r.filter(x => x.strategy  === "VWAP").length;
-  document.getElementById("m-conf").textContent  = r.filter(x => x.confirmed).length;
-  document.getElementById("m-paper").textContent = r.filter(x => x.mode      === "PAPER").length;
-  document.getElementById("m-live").textContent  = r.filter(x => x.mode      === "LIVE").length;
-  document.getElementById("m-err").textContent   = r.filter(x => String(x.status||"").startsWith("ERROR")).length;
-  document.getElementById("m-risk").textContent  = "$" + Math.round(risk).toLocaleString();
+// ── Runs tab ───────────────────────────────────────────────────────────────
+function fRun(f,btn){rFilt=f;document.querySelectorAll("#tab-runs .fb").forEach(b=>b.classList.remove("on"));btn.classList.add("on");renderRuns();}
+function sortR(col){
+  rSortDir=rSortCol===col?(rSortDir==="asc"?"desc":"asc"):"desc";
+  rSortCol=col;
+  document.querySelectorAll("#run-table th[data-col]").forEach(th=>{th.classList.remove("asc","desc");if(th.dataset.col===rSortCol)th.classList.add(rSortDir);});
+  renderRuns();
 }
-
-// ── Filter + sort + render table ───────────────────────────────────────────
-function filt(f, btn) {
-  activeFilt = f;
-  document.querySelectorAll(".f-btn").forEach(b => b.classList.remove("on"));
-  btn.classList.add("on");
-  renderTable();
-}
-function sort(col) {
-  sortDir = sortCol === col ? (sortDir === "asc" ? "desc" : "asc") : (col === "timestamp" ? "desc" : "asc");
-  sortCol = col;
-  document.querySelectorAll("th[data-col]").forEach(th => {
-    th.classList.remove("asc","desc");
-    if (th.dataset.col === sortCol) th.classList.add(sortDir);
-  });
-  renderTable();
-}
-
-function renderTable() {
-  const q = (document.getElementById("search").value || "").toLowerCase();
-  const filtered = all.filter(r => {
-    if (q && !(r.symbol||"").toLowerCase().includes(q)) return false;
-    if (activeFilt === "ALL")   return true;
-    if (activeFilt === "LONG")  return r.direction === "LONG";
-    if (activeFilt === "SHORT") return r.direction === "SHORT";
-    if (activeFilt === "ORB")   return r.strategy  === "ORB";
-    if (activeFilt === "VWAP")  return r.strategy  === "VWAP";
-    if (activeFilt === "PAPER") return r.mode       === "PAPER";
-    if (activeFilt === "LIVE")  return r.mode       === "LIVE";
-    if (activeFilt === "ERROR") return String(r.status||"").startsWith("ERROR");
+function renderRuns(){
+  let filtered=runs.filter(r=>{
+    if(rFilt==="ALL") return true;
+    if(rFilt==="OK") return r.status==="OK";
+    if(rFilt==="MARKET_CLOSED") return r.status==="MARKET_CLOSED"||!r.market_open;
+    if(rFilt==="ERROR") return r.status==="ERROR";
     return true;
   });
-  filtered.sort((a,b) => {
-    let va = a[sortCol] ?? "", vb = b[sortCol] ?? "";
-    if (sortCol === "timestamp") { va = new Date(va).getTime(); vb = new Date(vb).getTime(); }
-    else if (typeof va === "string") { va = va.toLowerCase(); vb = vb.toLowerCase(); }
-    return va < vb ? (sortDir==="asc"?-1:1) : va > vb ? (sortDir==="asc"?1:-1) : 0;
+  filtered=[...filtered].sort((a,b)=>{
+    let va=a[rSortCol]??"",vb=b[rSortCol]??"";
+    if(rSortCol==="timestamp"){va=new Date(va).getTime();vb=new Date(vb).getTime();}
+    return va<vb?(rSortDir==="asc"?-1:1):va>vb?(rSortDir==="asc"?1:-1):0;
   });
+  const tbody=document.getElementById("run-tbody");
+  tbody.innerHTML="";
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:36px;color:var(--muted)">'+
+      (runs.length?"No runs match this filter.":"No run history yet — trigger the bot from GitHub Actions.")+"</td></tr>";
+  }else{
+    filtered.forEach(r=>{
+      const ts=toET(r.timestamp);
+      const tr=document.createElement("tr");
+      tr.className="click";
+      tr.onclick=()=>openRunDrawer(r);
+      tr.innerHTML=`
+        <td>${tsCell(ts)}</td>
+        <td>${siIcon(r)}${runStatusTag(r)}</td>
+        <td><span class="tag t-${(r.mode||"paper").toLowerCase()}">${r.mode||"—"}</span></td>
+        <td class="mono">${r.portfolio_value>0?dollar(r.portfolio_value):"—"}</td>
+        <td class="mono">${r.open_positions??0} / ${r.watchlist?.length||5}</td>
+        <td class="mono">${r.signals_found||0}</td>
+        <td class="mono" style="color:${r.trades_placed>0?"var(--green)":"var(--muted)"};font-weight:${r.trades_placed>0?600:400}">${r.trades_placed||0}</td>
+        <td class="mono">${r.guardrail_blocks||0}</td>
+        <td style="font-size:11px;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis">${r.timing_reason||"—"}</td>
+        <td style="color:var(--muted);font-size:13px">›</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  document.getElementById("run-count").textContent=`Showing ${filtered.length} of ${runs.length} run${runs.length!==1?"s":""} · 7-day window`;
+}
 
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
-  if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--muted)">'
-      + (all.length ? "No trades match this filter." : "No trades recorded yet — run the bot to see data here.")
-      + "</td></tr>";
-  } else {
-    filtered.forEach(r => {
-      const ts  = toET(r.timestamp);
-      const err = String(r.status||"").startsWith("ERROR");
-      const tr  = document.createElement("tr");
-      tr.className = "clickable";
-      tr.onclick   = () => openDrawer(r);
-      tr.innerHTML = `
-        <td>
-          <div class="ts-date">${ts.date}</div>
-          <div class="ts-time">${ts.time}</div>
-          <div class="ts-ago">${ago(ts.ms)}</div>
-        </td>
+// ── Trades tab ─────────────────────────────────────────────────────────────
+function fTrade(f,btn){tFilt=f;document.querySelectorAll("#tab-trades .fb").forEach(b=>b.classList.remove("on"));btn.classList.add("on");renderTrades();}
+function sortT(col){
+  tSortDir=tSortCol===col?(tSortDir==="asc"?"desc":"asc"):(col==="timestamp"?"desc":"asc");
+  tSortCol=col;
+  document.querySelectorAll("#tab-trades th[data-col]").forEach(th=>{th.classList.remove("asc","desc");if(th.dataset.col===tSortCol)th.classList.add(tSortDir);});
+  renderTrades();
+}
+function renderTrades(){
+  const q=(document.getElementById("tsrch").value||"").toLowerCase();
+  let filtered=trades.filter(r=>{
+    if(q&&!(r.symbol||"").toLowerCase().includes(q)) return false;
+    if(tFilt==="ALL") return true;
+    if(tFilt==="LONG") return r.direction==="LONG";
+    if(tFilt==="SHORT") return r.direction==="SHORT";
+    if(tFilt==="ORB") return r.strategy==="ORB";
+    if(tFilt==="VWAP") return r.strategy==="VWAP";
+    if(tFilt==="PAPER") return r.mode==="PAPER";
+    if(tFilt==="LIVE") return r.mode==="LIVE";
+    if(tFilt==="ERROR") return String(r.status||"").startsWith("ERROR");
+    return true;
+  });
+  filtered=[...filtered].sort((a,b)=>{
+    let va=a[tSortCol]??"",vb=b[tSortCol]??"";
+    if(tSortCol==="timestamp"){va=new Date(va).getTime();vb=new Date(vb).getTime();}
+    else if(typeof va==="string"){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return va<vb?(tSortDir==="asc"?-1:1):va>vb?(tSortDir==="asc"?1:-1):0;
+  });
+  const tbody=document.getElementById("trade-tbody");
+  tbody.innerHTML="";
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="14" style="text-align:center;padding:36px;color:var(--muted)">'+
+      (trades.length?"No trades match this filter.":"No trades yet — signals need to trigger during market hours.")+"</td></tr>";
+  }else{
+    filtered.forEach(r=>{
+      const ts=toET(r.timestamp);
+      const err=String(r.status||"").startsWith("ERROR");
+      const tr=document.createElement("tr");
+      tr.className="click";
+      tr.onclick=()=>openTradeDrawer(r);
+      tr.innerHTML=`
+        <td>${tsCell(ts)}</td>
         <td class="sym">${r.symbol||"—"}</td>
-        <td><span class="tag tg-${(r.direction||"").toLowerCase()}">${r.direction||"—"}</span></td>
-        <td><span class="tag tg-${(r.strategy||"vwap").toLowerCase()}">${r.strategy||"—"}</span></td>
-        <td><span class="tag tg-${(r.mode||"paper").toLowerCase()}">${r.mode||"—"}</span></td>
+        <td><span class="tag t-${(r.direction||"").toLowerCase()}">${r.direction||"—"}</span></td>
+        <td><span class="tag t-${(r.strategy||"vwap").toLowerCase()}">${r.strategy||"—"}</span></td>
+        <td><span class="tag t-${(r.mode||"paper").toLowerCase()}">${r.mode||"—"}</span></td>
         <td class="mono">${dollar(r.entry_price)}</td>
         <td class="mono" style="color:var(--red)">${dollar(r.stop_price)}</td>
         <td class="mono" style="color:var(--green)">${dollar(r.target1_price)}</td>
         <td class="mono" style="color:var(--green)">${dollar(r.target2_price)}</td>
         <td class="mono">${r.qty||"—"}</td>
         <td class="mono">${dollar(r.risk_dollars)}</td>
-        <td><span class="tag ${r.confirmed?"tg-yes":"tg-no"}">${r.confirmed?"Yes":"No"}</span></td>
-        <td><span class="tag ${err?"tg-error":"tg-open"}">${err?"Error":r.status||"Open"}</span></td>
+        <td><span class="tag ${r.confirmed?"t-yes":"t-no"}">${r.confirmed?"Yes":"No"}</span></td>
+        <td><span class="tag ${err?"t-error":"t-open"}">${err?"Error":r.status||"Open"}</span></td>
         <td style="color:var(--muted);font-size:13px">›</td>`;
       tbody.appendChild(tr);
     });
   }
-  document.getElementById("row-count").textContent =
-    `Showing ${filtered.length} of ${all.length} trade${all.length!==1?"s":""} · 7-day window`;
+  document.getElementById("trade-count").textContent=`Showing ${filtered.length} of ${trades.length} trade${trades.length!==1?"s":""}`;
 }
 
-// ── Drawer ─────────────────────────────────────────────────────────────────
-function openDrawer(r) {
-  const ts  = toET(r.timestamp);
-  const err = String(r.status||"").startsWith("ERROR");
-  const orb = (r.orb_high && r.orb_low)
-    ? `$${Number(r.orb_low).toFixed(2)} – $${Number(r.orb_high).toFixed(2)}`
-    : "N/A (VWAP trade)";
+// ── Run drawer ─────────────────────────────────────────────────────────────
+function openRunDrawer(r){
+  const ts=toET(r.timestamp);
+  const scans=r.scans||[];
+  const scanRows=scans.length?scans.map((s,i)=>{
+    const last=i===scans.length-1;
+    const cls=last?"last":"";
+    const signalTag=s.signal==="LONG"?'<span class="tag t-long">LONG</span>':
+                    s.signal==="SHORT"?'<span class="tag t-short">SHORT</span>':
+                    s.signal==="SKIPPED"?'<span class="tag t-none">Skipped</span>':
+                    s.signal==="BLOCKED"?'<span class="tag t-closed">Blocked</span>':
+                    s.signal==="NO_DATA"?'<span class="tag t-error">No data</span>':
+                    '<span class="tag t-none">None</span>';
+    return`<div class="sg-cell ${cls}">${s.symbol||"—"}</div>
+           <div class="sg-cell ${cls}">${signalTag}</div>
+           <div class="sg-cell ${cls}">${s.strategy||"—"}</div>
+           <div class="sg-cell ${cls} mono">${s.price>0?"$"+s.price.toFixed(2):"—"}</div>
+           <div class="sg-cell ${cls} mono">${s.rsi>0?s.rsi.toFixed(1):"—"}</div>
+           <div class="sg-cell ${cls}">${s.traded?'<span class="tag t-ok">Traded</span>':'<span style="color:var(--muted);font-size:12px">—</span>'}</div>
+           <div class="sg-cell ${cls}" style="font-size:11px;color:var(--muted);white-space:normal;word-break:break-word">${s.reason||""}</div>`;
+  }).join(""):
+  '<div class="sg-cell last" style="grid-column:1/-1;color:var(--muted);text-align:center;padding:14px">No scan data — market was closed this run</div>';
 
-  document.getElementById("drawer-title").textContent =
-    `${r.symbol} · ${r.direction} · ${r.strategy} · ${r.mode}`;
-
-  document.getElementById("drawer-body").innerHTML = `
+  document.getElementById("dtitle").textContent=`Run · ${ts.date} · ${r.mode}`;
+  document.getElementById("dbody").innerHTML=`
     <div class="ts-hero">
-      <div class="ts-hero-full">${ts.full}</div>
-      <div class="ts-hero-sub">${ago(ts.ms)} · Eastern Time (ET)</div>
-      <div class="ts-hero-runid">GitHub run ID: ${r.run_id||"—"}</div>
+      <div class="ts-full">${ts.full}</div>
+      <div class="ts-sub">${ago(ts.ms)} · Run ID: ${r.run_id||"—"}</div>
     </div>
-
-    <div class="detail-grid">
-      <div class="drow"><span class="dlabel">Symbol</span><span class="dval">${r.symbol||"—"}</span></div>
-      <div class="drow"><span class="dlabel">Direction</span><span class="dval"><span class="tag tg-${(r.direction||"").toLowerCase()}">${r.direction||"—"}</span></span></div>
-      <div class="drow"><span class="dlabel">Strategy</span><span class="dval"><span class="tag tg-${(r.strategy||"vwap").toLowerCase()}">${r.strategy||"—"}</span></span></div>
-      <div class="drow"><span class="dlabel">Mode</span><span class="dval"><span class="tag tg-${(r.mode||"paper").toLowerCase()}">${r.mode||"—"}</span></span></div>
-      <div class="drow"><span class="dlabel">Entry price</span><span class="dval">${dollar(r.entry_price)}</span></div>
-      <div class="drow"><span class="dlabel">Qty (shares)</span><span class="dval">${r.qty||"—"}</span></div>
-      <div class="drow"><span class="dlabel">Stop loss</span><span class="dval" style="color:var(--red)">${dollar(r.stop_price)}</span></div>
-      <div class="drow"><span class="dlabel">Risk $</span><span class="dval" style="color:var(--red)">${dollar(r.risk_dollars)}</span></div>
-      <div class="drow"><span class="dlabel">Target 1 (50%)</span><span class="dval" style="color:var(--green)">${dollar(r.target1_price)}</span></div>
-      <div class="drow"><span class="dlabel">Target 2 (50%)</span><span class="dval" style="color:var(--green)">${dollar(r.target2_price)}</span></div>
-      <div class="drow"><span class="dlabel">Portfolio value</span><span class="dval">${dollar(r.portfolio_value)}</span></div>
-      <div class="drow"><span class="dlabel">Capital limit</span><span class="dval">${dollar(r.capital_limit)}</span></div>
-      <div class="drow"><span class="dlabel">Confirmed 2-bar</span><span class="dval">${r.confirmed?"Yes — held 2 consecutive 15-min bars":"No — single bar"}</span></div>
-      <div class="drow"><span class="dlabel">ORB range</span><span class="dval">${orb}</span></div>
-      <div class="drow"><span class="dlabel">Status</span><span class="dval"><span class="tag ${err?"tg-error":"tg-open"}">${err?"Error":r.status||"Open"}</span></span></div>
+    <div class="dg">
+      <div class="dr"><span class="dl">Status</span><span class="dv">${runStatusTag(r)}</span></div>
+      <div class="dr"><span class="dl">Mode</span><span class="dv"><span class="tag t-${(r.mode||"paper").toLowerCase()}">${r.mode||"—"}</span></span></div>
+      <div class="dr"><span class="dl">Market open</span><span class="dv">${r.market_open?"Yes":"No"}</span></div>
+      <div class="dr"><span class="dl">Portfolio value</span><span class="dv">${r.portfolio_value>0?dollar(r.portfolio_value):"—"}</span></div>
+      <div class="dr"><span class="dl">Buying power</span><span class="dv">${r.buying_power>0?dollar(r.buying_power):"—"}</span></div>
+      <div class="dr"><span class="dl">Capital limit</span><span class="dv">${dollar(r.capital_limit)}</span></div>
+      <div class="dr"><span class="dl">Open positions</span><span class="dv">${r.open_positions??0}</span></div>
+      <div class="dr"><span class="dl">Signals found</span><span class="dv">${r.signals_found||0}</span></div>
+      <div class="dr"><span class="dl">Trades placed</span><span class="dv" style="color:var(--green);font-weight:600">${r.trades_placed||0}</span></div>
+      <div class="dr"><span class="dl">Guardrail blocks</span><span class="dv">${r.guardrail_blocks||0}</span></div>
     </div>
-
-    <div class="signal-label">Signal reason</div>
-    <div class="signal-box">${r.signal_reason||"No reason recorded"}</div>
-
-    <div class="signal-label">Alpaca order IDs</div>
-    <div class="order-grid">
-      <div class="orow"><span>Entry order</span><span>${r.entry_order_id||"—"}</span></div>
-      <div class="orow"><span>Stop loss</span><span>${r.stop_order_id||"—"}</span></div>
-      <div class="orow"><span>Target 1</span><span>${r.t1_order_id||"—"}</span></div>
-      <div class="orow"><span>Target 2</span><span>${r.t2_order_id||"—"}</span></div>
-      <div class="orow"><span>Run ID</span><span>${r.run_id||"—"}</span></div>
+    <div class="slbl">Timing reason</div>
+    <div class="sig-box">${r.timing_reason||"—"}</div>
+    ${r.error_detail?`<div class="slbl">Error detail</div><div class="sig-box" style="color:var(--red)">${r.error_detail}</div>`:""}
+    <div class="slbl">Stock scan results (${scans.length} stocks)</div>
+    <div class="scan-grid">
+      <div class="sg-hdr">Symbol</div>
+      <div class="sg-hdr">Signal</div>
+      <div class="sg-hdr">Strategy</div>
+      <div class="sg-hdr">Price</div>
+      <div class="sg-hdr">RSI</div>
+      <div class="sg-hdr">Traded</div>
+      <div class="sg-hdr">Reason</div>
+      ${scanRows}
     </div>`;
-
   document.getElementById("overlay").classList.add("open");
 }
-function closeDrawer(e) {
-  if (!e || e.target === document.getElementById("overlay"))
+
+// ── Trade drawer ───────────────────────────────────────────────────────────
+function openTradeDrawer(r){
+  const ts=toET(r.timestamp);
+  const err=String(r.status||"").startsWith("ERROR");
+  const orb=(r.orb_high&&r.orb_low)?`$${Number(r.orb_low).toFixed(2)} – $${Number(r.orb_high).toFixed(2)}`:"N/A (VWAP)";
+  document.getElementById("dtitle").textContent=`${r.symbol} · ${r.direction} · ${r.strategy} · ${r.mode}`;
+  document.getElementById("dbody").innerHTML=`
+    <div class="ts-hero">
+      <div class="ts-full">${ts.full}</div>
+      <div class="ts-sub">${ago(ts.ms)} · Run ID: ${r.run_id||"—"}</div>
+    </div>
+    <div class="dg">
+      <div class="dr"><span class="dl">Symbol</span><span class="dv">${r.symbol||"—"}</span></div>
+      <div class="dr"><span class="dl">Direction</span><span class="dv"><span class="tag t-${(r.direction||"").toLowerCase()}">${r.direction||"—"}</span></span></div>
+      <div class="dr"><span class="dl">Strategy</span><span class="dv"><span class="tag t-${(r.strategy||"vwap").toLowerCase()}">${r.strategy||"—"}</span></span></div>
+      <div class="dr"><span class="dl">Mode</span><span class="dv"><span class="tag t-${(r.mode||"paper").toLowerCase()}">${r.mode||"—"}</span></span></div>
+      <div class="dr"><span class="dl">Entry price</span><span class="dv">${dollar(r.entry_price)}</span></div>
+      <div class="dr"><span class="dl">Qty (shares)</span><span class="dv">${r.qty||"—"}</span></div>
+      <div class="dr"><span class="dl">Stop loss</span><span class="dv" style="color:var(--red)">${dollar(r.stop_price)}</span></div>
+      <div class="dr"><span class="dl">Risk $</span><span class="dv" style="color:var(--red)">${dollar(r.risk_dollars)}</span></div>
+      <div class="dr"><span class="dl">Target 1 (50%)</span><span class="dv" style="color:var(--green)">${dollar(r.target1_price)}</span></div>
+      <div class="dr"><span class="dl">Target 2 (50%)</span><span class="dv" style="color:var(--green)">${dollar(r.target2_price)}</span></div>
+      <div class="dr"><span class="dl">Portfolio value</span><span class="dv">${dollar(r.portfolio_value)}</span></div>
+      <div class="dr"><span class="dl">Capital limit</span><span class="dv">${dollar(r.capital_limit)}</span></div>
+      <div class="dr"><span class="dl">Confirmed 2-bar</span><span class="dv">${r.confirmed?"Yes — held 2 bars":"No — single bar"}</span></div>
+      <div class="dr"><span class="dl">ORB range</span><span class="dv">${orb}</span></div>
+      <div class="dr"><span class="dl">Status</span><span class="dv"><span class="tag ${err?"t-error":"t-open"}">${err?"Error":r.status||"Open"}</span></span></div>
+    </div>
+    <div class="slbl">Signal reason</div>
+    <div class="sig-box">${r.signal_reason||"No reason recorded"}</div>
+    <div class="slbl">Alpaca order IDs</div>
+    <div class="ogrid">
+      <div class="or"><span>Entry order</span><span>${r.entry_order_id||"—"}</span></div>
+      <div class="or"><span>Stop loss</span><span>${r.stop_order_id||"—"}</span></div>
+      <div class="or"><span>Target 1</span><span>${r.t1_order_id||"—"}</span></div>
+      <div class="or"><span>Target 2</span><span>${r.t2_order_id||"—"}</span></div>
+      <div class="or"><span>Run ID</span><span>${r.run_id||"—"}</span></div>
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
+function closeD(e){
+  if(!e||e.target===document.getElementById("overlay"))
     document.getElementById("overlay").classList.remove("open");
 }
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") document.getElementById("overlay").classList.remove("open");
-});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("overlay").classList.remove("open");});
 
-// ── Auto-refresh every 5 min + initial load ────────────────────────────────
-loadData();
-setInterval(loadData, 5 * 60 * 1000);
+loadAll();
+setInterval(loadAll,5*60*1000);
 </script>
 </body>
 </html>

@@ -94,7 +94,7 @@ jobs:
           git config user.name  "trading-bot[bot]"
           git config user.email "trading-bot@users.noreply.github.com"
           git pull --rebase origin main || true
-          git add trade_records.json || true
+          git add trade_records.json run_log.json || true
           if git diff --staged --quiet; then
             echo "No changes to trade_records.json — skipping commit"
           else
