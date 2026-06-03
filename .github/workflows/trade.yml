@@ -1,9 +1,9 @@
-name: VWAP EMA RSI Trading Bot
+name: Trading Bot v4
 
 on:
   schedule:
-    # Every 15 min, Mon–Fri market hours (UTC, summer EDT = UTC-4)
-    # Bot's own timing guard rejects weekends and out-of-window runs
+    # Every 15 min Mon–Fri 9:30 AM–3:30 PM ET (UTC-4 summer)
+    # Bot's own timing guard handles weekends, opening/closing buffers
     - cron: "30 13 * * 1-5"
     - cron: "45 13 * * 1-5"
     - cron: "0  14 * * 1-5"
@@ -29,71 +29,56 @@ on:
     - cron: "0  19 * * 1-5"
     - cron: "15 19 * * 1-5"
     - cron: "30 19 * * 1-5"
-    # Cron stops at 3:15 PM ET (19:15 UTC); bot's close buffer stops at 3:30 PM ET
 
-  # ── Manual trigger ─────────────────────────────────────────────────────────
-  # PAPER flow: set mode=paper, enter capital_limit, leave live_confirm blank
-  # LIVE flow:  set mode=live, type "confirm" in live_confirm, enter capital_limit
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Trading mode'
+        description: "Trading mode"
         required: true
-        default: 'paper'
+        default: "paper"
         type: choice
-        options:
-          - paper
-          - live
+        options: [paper, live]
       capital_limit:
-        description: 'Capital to use (USD) — required for both paper and live'
+        description: "Max capital to use (USD)"
         required: true
-        default: '1000'
+        default: "1000"
       live_confirm:
-        description: 'LIVE mode only — type exactly: confirm'
+        description: "LIVE only — type exactly: confirm"
         required: false
-        default: ''
+        default: ""
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 8     # hard kill if something hangs
-
+    timeout-minutes: 8
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
+      - run: pip install -r requirements.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run trading bot
+      - name: Run bot
         env:
-          # Mode — 'paper' or 'live' from input; scheduled runs always paper
-          PAPER_MODE: ${{ github.event.inputs.mode == 'live' && 'false' || 'true' }}
-
-          # Capital limit — required for both modes
+          PAPER_MODE:    ${{ github.event.inputs.mode == 'live' && 'false' || 'true' }}
           CAPITAL_LIMIT: ${{ github.event.inputs.capital_limit || '0' }}
+          LIVE_CONFIRM:  ${{ github.event.inputs.live_confirm || '' }}
 
-          # Live confirmation — must be typed as 'confirm' to enable live trading
-          LIVE_CONFIRM: ${{ github.event.inputs.live_confirm || '' }}
-
-          # Paper keys
           ALPACA_PAPER_API_KEY:    ${{ secrets.ALPACA_PAPER_API_KEY }}
           ALPACA_PAPER_API_SECRET: ${{ secrets.ALPACA_PAPER_API_SECRET }}
-
-          # Live keys (add to Secrets when ready to go live)
           ALPACA_LIVE_API_KEY:     ${{ secrets.ALPACA_LIVE_API_KEY }}
           ALPACA_LIVE_API_SECRET:  ${{ secrets.ALPACA_LIVE_API_SECRET }}
 
-          # Run ID for trade record traceability
+          GIST_TOKEN:       ${{ secrets.GIST_TOKEN }}
+          GIST_ID:          ${{ secrets.GIST_ID }}
+
+          TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
           GITHUB_RUN_ID: ${{ github.run_id }}
 
-        run: python vwap_ema_rsi_bot.py
+        run: python bot.py
 
       - name: Upload artifacts
         if: always()

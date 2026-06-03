@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trading Dashboard</title>
+<style>
+:root{--bg:#f6f5f0;--card:#fff;--border:#e4e2dc;--text:#1a1918;--muted:#706f69;--green:#27500A;--gbg:#eaf3de;--red:#791F1F;--rbg:#fcebeb;--blue:#0C447C;--bbg:#E6F1FB;--amber:#633806;--ambg:#FAEEDA;--purple:#3C3489;--pbg:#EEEDFE;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.topbar h1{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.topbar .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#639922;display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.setup{background:var(--ambg);border:1px solid #EF9F27;border-radius:var(--r);padding:14px 18px;margin-bottom:20px}
+.setup h3{font-size:13px;font-weight:600;color:var(--amber);margin-bottom:6px}
+.setup p{font-size:12px;color:#854F0B;line-height:1.7}
+.setup code{background:#fff8ee;padding:1px 5px;border-radius:3px;font-size:11px;font-family:monospace}
+.input-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.input-row input{flex:1;min-width:240px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;background:var(--card);color:var(--text)}
+.input-row input:focus{outline:none;border-color:#378ADD}
+.btn{padding:9px 18px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);transition:opacity .15s}
+.btn-primary{background:var(--text);color:var(--card)}
+.btn-outline{background:var(--card);color:var(--text)}
+.btn:hover{opacity:.82}
+.err{background:var(--rbg);color:var(--red);border-radius:var(--r);padding:11px 15px;margin-bottom:14px;font-size:13px;display:none}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
+.ml{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.mv{font-size:22px;font-weight:600}
+.ms{font-size:11px;color:var(--muted);margin-top:2px}
+.section-hdr{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{padding:5px 13px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s}
+.filter-btn.active{background:var(--text);color:var(--card);border-color:var(--text)}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:auto;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px}
+th{text-align:left;padding:10px 13px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+td{padding:11px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#faf9f5}
+.sym{font-weight:600;font-size:14px}
+.mono{font-family:monospace;font-size:12px}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.t-long{background:var(--gbg);color:var(--green)}
+.t-short{background:var(--rbg);color:var(--red)}
+.t-paper{background:var(--bbg);color:var(--blue)}
+.t-live{background:var(--rbg);color:var(--red)}
+.t-vwap{background:var(--pbg);color:var(--purple)}
+.t-orb{background:var(--ambg);color:var(--amber)}
+.t-open{background:var(--gbg);color:var(--green)}
+.t-error{background:var(--rbg);color:var(--red)}
+.t-conf{background:var(--gbg);color:var(--green)}
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.guardrail-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px}
+.guardrail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.gr-card{border-radius:8px;padding:11px 13px;border:1px solid}
+.gr-ok{background:var(--gbg);border-color:#97C459}
+.gr-warn{background:var(--ambg);border-color:#EF9F27}
+.gr-label{font-size:12px;font-weight:500;margin-bottom:3px}
+.gr-val{font-size:11px;color:var(--muted)}
+.strategy-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px}
+.strategy-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.strat-card{border-radius:8px;padding:13px 15px;border:1px solid}
+.strat-vwap{background:var(--pbg);border-color:#AFA9EC}
+.strat-orb{background:var(--ambg);border-color:#EF9F27}
+.strat-title{font-size:13px;font-weight:500;margin-bottom:5px}
+.strat-body{font-size:12px;line-height:1.6;color:var(--muted)}
+.time-window{display:inline-block;background:rgba(0,0,0,.07);border-radius:4px;padding:1px 7px;font-size:11px;font-family:monospace;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1><span class="status-dot"></span>Trading Bot Dashboard</h1>
+    <div class="sub">VWAP Mean Reversion + Opening Range Breakout · Alpaca · GitHub Gist</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span id="clock" style="font-size:13px;color:var(--muted)"></span>
+    <span id="market-status" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--gbg);color:var(--green)">Loading...</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="setup" id="setup-notice">
+    <h3>Connect to your Gist to load live trade data</h3>
+    <p>
+      Your trades are stored in a private GitHub Gist. Enter your <strong>Gist ID</strong> and a 
+      <strong>GitHub token</strong> with <code>gist</code> read scope.<br>
+      Gist URL: <code>gist.github.com/gajjela521/<strong>YOUR_GIST_ID</strong></code> — the bold part is your Gist ID.<br>
+      Token: github.com → Settings → Developer settings → Personal access tokens → gist scope.
+    </p>
+  </div>
+
+  <div class="input-row">
+    <input id="gist-id" placeholder="Gist ID  (e.g. a1b2c3d4e5f6a1b2c3d4...)" />
+    <input id="gist-token" placeholder="GitHub token  (ghp_...)" type="password" />
+    <button class="btn btn-primary" onclick="loadData()">Load trades</button>
+    <button class="btn btn-outline" onclick="location.reload()">Reset</button>
+  </div>
+
+  <div class="err" id="err"></div>
+
+  <!-- Active strategy schedule -->
+  <div class="strategy-section">
+    <div class="section-hdr">Active strategies by time of day</div>
+    <div class="strategy-grid">
+      <div class="strat-card strat-orb">
+        <div class="time-window">9:45 – 10:30 AM ET</div>
+        <div class="strat-title" style="color:var(--amber)">Opening Range Breakout (ORB)</div>
+        <div class="strat-body">
+          Establishes the first 15-min price range (9:30–9:45). Enters LONG when price breaks above range high + ATR buffer with volume. Enters SHORT on breakdown below range low. Best for momentum continuation. Skips flat/tight opens.
+        </div>
+      </div>
+      <div class="strat-card strat-vwap">
+        <div class="time-window">10:30 AM – 3:00 PM ET</div>
+        <div class="strat-title" style="color:var(--purple)">VWAP Mean Reversion</div>
+        <div class="strat-body">
+          Waits for price to pull back to VWAP in an established trend. Requires EMA9 &gt; EMA21 (long) or &lt; EMA21 (short), RSI 45–62 for longs / 38–55 for shorts, and volume confirmation. Signal must hold for 2 consecutive 15-min bars.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guardrails reference -->
+  <div class="guardrail-section">
+    <div class="section-hdr">Guardrails — active on every run</div>
+    <div class="guardrail-grid">
+      <div class="gr-card gr-ok">
+        <div class="gr-label">Daily loss limit</div>
+        <div class="gr-val">Stops all trading if day P&amp;L &lt; −2% of portfolio</div>
+      </div>
+      <div class="gr-card gr-ok">
+        <div class="gr-label">Max drawdown</div>
+        <div class="gr-val">Emergency halt if portfolio drops 6% from session high</div>
+      </div>
+      <div class="gr-card gr-ok">
+        <div class="gr-label">PDT rule</div>
+        <div class="gr-val">Live accounts below $25k blocked from day trading</div>
+      </div>
+      <div class="gr-card gr-ok">
+        <div class="gr-label">Daily trade cap</div>
+        <div class="gr-val">Max 6 trades per day — hard limit</div>
+      </div>
+      <div class="gr-card gr-ok">
+        <div class="gr-label">Correlation block</div>
+        <div class="gr-val">Won't hold NVDA+AMD+SMCI or AAPL+MSFT+META simultaneously</div>
+      </div>
+      <div class="gr-card gr-warn">
+        <div class="gr-label">Earnings/news heuristic</div>
+        <div class="gr-val">Skips if volume is 3x+ above average (likely news event)</div>
+      </div>
+      <div class="gr-card gr-ok">
+        <div class="gr-label">Account minimum</div>
+        <div class="gr-val">No trading if portfolio &lt; $1,000</div>
+      </div>
+      <div class="gr-card gr-ok">
+        <div class="gr-label">Confirmation candle</div>
+        <div class="gr-val">Signal must hold for 2 consecutive 15-min bars before entry</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics" id="metrics" style="display:none">
+    <div class="metric"><div class="ml">Trades (7d)</div><div class="mv" id="m-total">—</div><div class="ms">this week</div></div>
+    <div class="metric"><div class="ml">Long</div><div class="mv" id="m-long" style="color:var(--green)">—</div><div class="ms">buy entries</div></div>
+    <div class="metric"><div class="ml">Short</div><div class="mv" id="m-short" style="color:var(--red)">—</div><div class="ms">sell entries</div></div>
+    <div class="metric"><div class="ml">ORB trades</div><div class="mv" id="m-orb" style="color:var(--amber)">—</div><div class="ms">opening breakout</div></div>
+    <div class="metric"><div class="ml">VWAP trades</div><div class="mv" id="m-vwap" style="color:var(--purple)">—</div><div class="ms">mean reversion</div></div>
+    <div class="metric"><div class="ml">Confirmed</div><div class="mv" id="m-conf" style="color:var(--green)">—</div><div class="ms">2-bar filter passed</div></div>
+    <div class="metric"><div class="ml">Paper</div><div class="mv" id="m-paper" style="color:var(--blue)">—</div><div class="ms">simulated</div></div>
+    <div class="metric"><div class="ml">Live</div><div class="mv" id="m-live" style="color:var(--red)">—</div><div class="ms">real money</div></div>
+    <div class="metric"><div class="ml">Risk deployed</div><div class="mv" id="m-risk">—</div><div class="ms">USD at risk</div></div>
+    <div class="metric"><div class="ml">Errors</div><div class="mv" id="m-err" style="color:var(--red)">—</div><div class="ms">failed orders</div></div>
+  </div>
+
+  <!-- Trade table -->
+  <div id="table-section" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div class="section-hdr" style="margin:0">All trades — last 7 days</div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="filter('ALL',this)">All</button>
+        <button class="filter-btn" onclick="filter('LONG',this)">Long</button>
+        <button class="filter-btn" onclick="filter('SHORT',this)">Short</button>
+        <button class="filter-btn" onclick="filter('ORB',this)">ORB</button>
+        <button class="filter-btn" onclick="filter('VWAP',this)">VWAP</button>
+        <button class="filter-btn" onclick="filter('PAPER',this)">Paper</button>
+        <button class="filter-btn" onclick="filter('LIVE',this)">Live</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Time (ET)</th><th>Symbol</th><th>Dir</th><th>Strategy</th><th>Mode</th>
+          <th>Entry $</th><th>Stop $</th><th>T1 $</th><th>T2 $</th>
+          <th>Qty</th><th>Risk $</th><th>Confirmed</th><th>ORB range</th><th>Status</th>
+        </tr></thead>
+        <tbody id="trade-rows"></tbody>
+      </table>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px" id="row-count"></div>
+  </div>
+
+</div>
+
+<script>
+let allRecords = [];
+let activeFilter = 'ALL';
+
+function tick(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}) + ' ET';
+  const h = parseInt(now.toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',hour12:false}));
+  const m = parseInt(now.toLocaleString('en-US',{timeZone:'America/New_York',minute:'numeric'}));
+  const day = new Date().toLocaleString('en-US',{timeZone:'America/New_York',weekday:'short'});
+  const isWeekday = !['Sat','Sun'].includes(day);
+  const mins = h*60+m;
+  const ms = document.getElementById('market-status');
+  if(!isWeekday){ms.textContent='Weekend';ms.style.background='var(--ambg)';ms.style.color='var(--amber)';}
+  else if(mins>=570&&mins<960){ms.textContent='Market open';ms.style.background='var(--gbg)';ms.style.color='var(--green)';}
+  else{ms.textContent='Market closed';ms.style.background='var(--bg)';ms.style.color='var(--muted)';}
+}
+setInterval(tick,1000); tick();
+
+function fmt(ts){
+  try{return new Date(ts).toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}
+  catch{return ts;}
+}
+function dollar(v){return v!=null?'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';}
+function showErr(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block';}
+function hideErr(){document.getElementById('err').style.display='none';}
+
+async function loadData(){
+  const gistId=document.getElementById('gist-id').value.trim();
+  const token=document.getElementById('gist-token').value.trim();
+  if(!gistId||!token){showErr('Enter both Gist ID and GitHub token.');return;}
+  hideErr();
+  document.getElementById('setup-notice').style.display='none';
+  try{
+    const res=await fetch(`https://api.github.com/gists/${gistId}`,{
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!res.ok) throw new Error(`GitHub API ${res.status} — check Gist ID and token`);
+    const data=await res.json();
+    const file=data.files['trade_records.json'];
+    if(!file) throw new Error('trade_records.json not found — has the bot run yet?');
+    const records=JSON.parse(file.content);
+    const cutoff=Date.now()-7*24*60*60*1000;
+    allRecords=records.filter(r=>{try{return new Date(r.timestamp).getTime()>=cutoff;}catch{return true;}});
+    renderAll();
+  }catch(e){showErr('Error: '+e.message);}
+}
+
+function renderAll(){
+  const r=allRecords;
+  document.getElementById('m-total').textContent=r.length;
+  document.getElementById('m-long').textContent=r.filter(x=>x.direction==='LONG').length;
+  document.getElementById('m-short').textContent=r.filter(x=>x.direction==='SHORT').length;
+  document.getElementById('m-orb').textContent=r.filter(x=>x.strategy==='ORB').length;
+  document.getElementById('m-vwap').textContent=r.filter(x=>x.strategy==='VWAP').length;
+  document.getElementById('m-conf').textContent=r.filter(x=>x.confirmed).length;
+  document.getElementById('m-paper').textContent=r.filter(x=>x.mode==='PAPER').length;
+  document.getElementById('m-live').textContent=r.filter(x=>x.mode==='LIVE').length;
+  document.getElementById('m-err').textContent=r.filter(x=>String(x.status||'').startsWith('ERROR')).length;
+  const risk=r.reduce((s,x)=>s+(x.risk_dollars||0),0);
+  document.getElementById('m-risk').textContent='$'+Math.round(risk).toLocaleString();
+  document.getElementById('metrics').style.display='grid';
+  renderTable();
+}
+
+function filter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable(){
+  const filtered=allRecords.filter(r=>{
+    if(activeFilter==='ALL') return true;
+    if(activeFilter==='LONG') return r.direction==='LONG';
+    if(activeFilter==='SHORT') return r.direction==='SHORT';
+    if(activeFilter==='ORB') return r.strategy==='ORB';
+    if(activeFilter==='VWAP') return r.strategy==='VWAP';
+    if(activeFilter==='PAPER') return r.mode==='PAPER';
+    if(activeFilter==='LIVE') return r.mode==='LIVE';
+    return true;
+  });
+  const sorted=[...filtered].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+  const tbody=document.getElementById('trade-rows');
+  tbody.innerHTML='';
+  if(!sorted.length){
+    tbody.innerHTML='<tr><td colspan="14" class="empty">No trades match this filter.</td></tr>';
+  }else{
+    sorted.forEach(r=>{
+      const isErr=String(r.status||'').startsWith('ERROR');
+      const orbRange=(r.orb_high&&r.orb_low)?`$${r.orb_low?.toFixed(2)}–$${r.orb_high?.toFixed(2)}`:'—';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="mono">${fmt(r.timestamp)}</td>
+        <td class="sym">${r.symbol||'—'}</td>
+        <td><span class="tag t-${(r.direction||'').toLowerCase()}">${r.direction||'—'}</span></td>
+        <td><span class="tag t-${(r.strategy||'vwap').toLowerCase()}">${r.strategy||'—'}</span></td>
+        <td><span class="tag t-${(r.mode||'paper').toLowerCase()}">${r.mode||'—'}</span></td>
+        <td class="mono">${dollar(r.entry_price)}</td>
+        <td class="mono">${dollar(r.stop_price)}</td>
+        <td class="mono">${dollar(r.target1_price)}</td>
+        <td class="mono">${dollar(r.target2_price)}</td>
+        <td class="mono">${r.qty||'—'}</td>
+        <td class="mono">${dollar(r.risk_dollars)}</td>
+        <td>${r.confirmed?'<span class="tag t-conf">Yes</span>':'<span style="color:var(--muted)">No</span>'}</td>
+        <td class="mono">${orbRange}</td>
+        <td>${isErr?'<span class="tag t-error">Error</span>':'<span class="tag t-open">'+(r.status||'Open')+'</span>'}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  document.getElementById('row-count').textContent=`Showing ${sorted.length} of ${allRecords.length} records`;
+  document.getElementById('table-section').style.display='block';
+}
+</script>
+</body>
+</html>
