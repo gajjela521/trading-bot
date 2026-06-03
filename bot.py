@@ -102,23 +102,31 @@ def confirm_mode(portfolio: float) -> tuple[bool, float]:
 def fetch_bars(mc, symbol: str):
     from alpaca.data.requests import StockBarsRequest
     from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
+    from alpaca.data.enums import DataFeed
     from datetime import timezone, timedelta
     import pandas as pd
     try:
         end   = datetime.now(tz=timezone.utc)
-        start = end - timedelta(days=5)
+        start = end - timedelta(days=7)   # extra days to ensure 30+ bars
         req   = StockBarsRequest(
             symbol_or_symbols=symbol,
             timeframe=TimeFrame(15, TimeFrameUnit.Minute),
-            start=start, end=end,
+            start=start,
+            end=end,
+            feed=DataFeed.IEX,            # IEX feed — free for all Alpaca accounts
         )
         bars = mc.get_stock_bars(req).df
-        if bars.empty: return None
-        if hasattr(bars.index, "levels"): bars = bars.loc[symbol]
+        if bars.empty:
+            log.warning(f"{symbol}: empty bars — IEX may not have data for this symbol")
+            return None
+        if hasattr(bars.index, "levels"):
+            bars = bars.loc[symbol]
         bars.index = pd.to_datetime(bars.index, utc=True).tz_convert(ET)
-        return bars.sort_index()
+        bars = bars.sort_index()
+        log.info(f"{symbol}: fetched {len(bars)} bars (latest: {bars.index[-1].strftime('%m/%d %I:%M %p ET')})")
+        return bars
     except Exception as exc:
-        log.error(f"{symbol}: fetch_bars — {exc}")
+        log.error(f"{symbol}: fetch_bars failed — {exc}")
         return None
 
 
@@ -328,7 +336,7 @@ def main():
             continue
 
         bars = fetch_bars(mc, symbol)
-        if bars is None or len(bars) < 10:
+        if bars is None or len(bars) < 30:
             log.info(f"{symbol}: No data — skipped")
             scan_results.append(asdict_scan(symbol, "NO_DATA", "Insufficient bar data"))
             continue
