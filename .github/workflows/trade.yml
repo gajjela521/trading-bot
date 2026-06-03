@@ -2,8 +2,6 @@ name: Trading Bot v4
 
 on:
   schedule:
-    # Every 15 min Mon–Fri 9:30 AM–3:30 PM ET (UTC-4 summer)
-    # Bot's own timing guard handles weekends, opening/closing buffers
     - cron: "30 13 * * 1-5"
     - cron: "45 13 * * 1-5"
     - cron: "0  14 * * 1-5"
@@ -47,16 +45,25 @@ on:
         required: false
         default: ""
 
+# Need write permission to commit trade_records.json back to repo
+permissions:
+  contents: write
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Use PAT so the commit push is allowed
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
+
       - run: pip install -r requirements.txt
 
       - name: Run bot
@@ -72,21 +79,32 @@ jobs:
 
           GIST_TOKEN:       ${{ secrets.GIST_TOKEN }}
           GIST_ID:          ${{ secrets.GIST_ID }}
-
           TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
-          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ID:    ${{ github.run_id }}
 
         run: python bot.py
 
-      - name: Upload artifacts
+      # Commit trade_records.json back to repo so dashboard can read it without any token
+      - name: Commit trade records to repo
+        if: always()
+        run: |
+          git config user.name  "trading-bot[bot]"
+          git config user.email "trading-bot@users.noreply.github.com"
+          git pull --rebase origin main || true
+          git add trade_records.json || true
+          if git diff --staged --quiet; then
+            echo "No changes to trade_records.json — skipping commit"
+          else
+            git commit -m "bot: update trade records [skip ci]"
+            git push origin main
+          fi
+
+      - name: Upload log artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trade-log-${{ github.run_id }}
-          path: |
-            strategy_log.txt
-            trade_records.json
+          path: strategy_log.txt
           retention-days: 30
           if-no-files-found: ignore
