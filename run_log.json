@@ -586,5 +586,31 @@
     ],
     "scans": [],
     "error_detail": ""
+  },
+  {
+    "timestamp": "2026-06-03T16:05:42.240999-04:00",
+    "run_id": "26909878866",
+    "mode": "PAPER",
+    "status": "MARKET_CLOSED",
+    "market_open": false,
+    "timing_reason": "Closing buffer \u2014 no new trades after 03:30 PM ET",
+    "portfolio_value": 0,
+    "buying_power": 0,
+    "capital_limit": 0.0,
+    "open_positions": 0,
+    "trades_placed": 0,
+    "signals_found": 0,
+    "guardrail_blocks": 0,
+    "watchlist": [
+      "NBIS",
+      "NVDA",
+      "TSLA",
+      "AAPL",
+      "MSFT",
+      "AMD",
+      "META"
+    ],
+    "scans": [],
+    "error_detail": ""
   }
 ]
