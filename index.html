@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trading Bot Dashboard</title>
+<style>
+:root{
+  --bg:#f7f6f1;--card:#fff;--border:#e4e2db;--text:#1a1918;--muted:#706f69;
+  --green:#27500A;--gbg:#eaf3de;--gborder:#97C459;
+  --red:#791F1F;--rbg:#fcebeb;--rborder:#F09595;
+  --blue:#0C447C;--bbg:#E6F1FB;--bborder:#85B7EB;
+  --amber:#633806;--ambg:#FAEEDA;--amborder:#EF9F27;
+  --purple:#3C3489;--pbg:#EEEDFE;--pborder:#AFA9EC;
+  --r:10px;--r-sm:6px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1918;--card:#242320;--border:#3a3834;--text:#e8e6df;--muted:#9c9a92;
+    --green:#97C459;--gbg:#0e2105;--gborder:#3B6D11;
+    --red:#F09595;--rbg:#2a0a0a;--rborder:#791F1F;
+    --blue:#85B7EB;--bbg:#041828;--bborder:#0C447C;
+    --amber:#EF9F27;--ambg:#1e0f02;--amborder:#633806;
+    --purple:#AFA9EC;--pbg:#0f0d2a;--pborder:#3C3489;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* ── Topbar ── */
+.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.logo span{color:var(--muted);font-weight:400}
+.topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pulse{width:8px;height:8px;border-radius:50%;background:#639922;display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.market-pill{font-size:12px;padding:3px 11px;border-radius:20px;font-weight:500}
+.pill-open{background:var(--gbg);color:var(--green);border:1px solid var(--gborder)}
+.pill-closed{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.pill-weekend{background:var(--ambg);color:var(--amber);border:1px solid var(--amborder)}
+#clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+#refresh-btn{padding:6px 13px;border-radius:var(--r-sm);font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text)}
+#refresh-btn:hover{background:var(--bg)}
+
+/* ── Layout ── */
+.main{max-width:1280px;margin:0 auto;padding:20px 16px}
+.section-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+
+/* ── Connect panel ── */
+.connect-card{background:var(--card);border:1px solid var(--amborder);border-radius:var(--r);padding:18px 20px;margin-bottom:20px}
+.connect-card h2{font-size:14px;font-weight:600;color:var(--amber);margin-bottom:6px}
+.connect-card p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px}
+.connect-card code{background:var(--bg);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace;border:1px solid var(--border)}
+.input-row{display:flex;gap:8px;flex-wrap:wrap}
+.input-row input{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:var(--card);color:var(--text)}
+.input-row input:focus{outline:none;border-color:var(--blue)}
+.btn{padding:9px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);transition:opacity .15s;white-space:nowrap}
+.btn-primary{background:var(--text);color:var(--card);border-color:var(--text)}
+.btn-outline{background:var(--card);color:var(--text)}
+.btn:hover{opacity:.8}
+.err-box{background:var(--rbg);color:var(--red);border:1px solid var(--rborder);border-radius:var(--r-sm);padding:10px 14px;font-size:12px;margin-top:10px;display:none}
+
+/* ── Metrics grid ── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:22px}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px}
+.metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.metric-value{font-size:24px;font-weight:600;line-height:1}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── Filters ── */
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.f-btn{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s;font-weight:500}
+.f-btn.on{background:var(--text);color:var(--card);border-color:var(--text)}
+.search-input{padding:6px 11px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;background:var(--card);color:var(--text);min-width:160px}
+.search-input:focus{outline:none;border-color:var(--blue)}
+
+/* ── Table ── */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+th{text-align:left;padding:10px 13px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+th.sort-asc::after{content:" ↑"}
+th.sort-desc::after{content:" ↓"}
+td{padding:11px 13px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.sym{font-weight:600;font-size:14px}
+.mono{font-family:monospace;font-size:12px}
+
+/* ── Tags ── */
+.tag{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid}
+.tag-long{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
+.tag-short{background:var(--rbg);color:var(--red);border-color:var(--rborder)}
+.tag-paper{background:var(--bbg);color:var(--blue);border-color:var(--bborder)}
+.tag-live{background:var(--rbg);color:var(--red);border-color:var(--rborder)}
+.tag-vwap{background:var(--pbg);color:var(--purple);border-color:var(--pborder)}
+.tag-orb{background:var(--ambg);color:var(--amber);border-color:var(--amborder)}
+.tag-open{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
+.tag-error{background:var(--rbg);color:var(--red);border-color:var(--rborder)}
+.tag-yes{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
+.tag-no{background:var(--bg);color:var(--muted);border-color:var(--border)}
+
+/* ── Detail drawer ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.drawer-overlay.open{display:flex}
+.drawer{background:var(--card);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.drawer-title{font-size:16px;font-weight:600}
+.close-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.close-btn:hover{background:var(--card)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.detail-row{padding:8px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+.detail-row:last-child{border-bottom:none}
+.detail-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.detail-value{font-size:14px;font-weight:500}
+.detail-reason{background:var(--bg);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6;margin-top:12px;font-family:monospace}
+.order-ids{margin-top:14px}
+.order-ids h4{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.order-id-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.order-id-row:last-child{border-bottom:none}
+.order-id-val{font-family:monospace;font-size:11px;color:var(--muted)}
+
+/* ── Timestamp column ── */
+.ts-date{font-size:12px;color:var(--text);font-weight:500}
+.ts-time{font-size:11px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+.ts-ago{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ── Footer ── */
+.footer{font-size:11px;color:var(--muted);padding:16px 0 8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+
+/* ── Responsive ── */
+@media(max-width:600px){
+  .topbar{padding:10px 14px}
+  .main{padding:14px 10px}
+  .detail-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo">Trading Bot <span>Dashboard</span></div>
+  <div class="topbar-right">
+    <span id="clock"></span>
+    <span class="market-pill" id="market-pill">—</span>
+    <button id="refresh-btn" onclick="refresh()" style="display:none">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Connect -->
+  <div class="connect-card" id="connect-card">
+    <h2>Connect to your trade records</h2>
+    <p>
+      Your trades are stored in a private GitHub Gist. Enter your <strong>Gist ID</strong> and a 
+      GitHub token with <code>gist</code> read scope. Values are saved in your browser — 
+      you only need to enter them once.<br>
+      <strong>Gist ID</strong>: the long string in the URL after your username on gist.github.com.<br>
+      <strong>Token</strong>: github.com → Settings → Developer settings → Personal access tokens (classic) → select <code>gist</code> scope.
+    </p>
+    <div class="input-row">
+      <input id="inp-gist" placeholder="Gist ID  (e.g. a1b2c3d4e5f6...)" autocomplete="off"/>
+      <input id="inp-token" placeholder="GitHub token  (ghp_...)" type="password" autocomplete="off"/>
+      <button class="btn btn-primary" onclick="connect()">Connect</button>
+    </div>
+    <div class="err-box" id="err-box"></div>
+  </div>
+
+  <!-- Metrics (hidden until loaded) -->
+  <div id="metrics-section" style="display:none">
+    <div class="section-label">Summary — last 7 days</div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Total trades</div><div class="metric-value" id="m-total" style="color:var(--text)">—</div><div class="metric-sub">this week</div></div>
+      <div class="metric"><div class="metric-label">Long entries</div><div class="metric-value" id="m-long" style="color:var(--green)">—</div><div class="metric-sub">buy signals</div></div>
+      <div class="metric"><div class="metric-label">Short entries</div><div class="metric-value" id="m-short" style="color:var(--red)">—</div><div class="metric-sub">sell signals</div></div>
+      <div class="metric"><div class="metric-label">ORB trades</div><div class="metric-value" id="m-orb" style="color:var(--amber)">—</div><div class="metric-sub">opening breakout</div></div>
+      <div class="metric"><div class="metric-label">VWAP trades</div><div class="metric-value" id="m-vwap" style="color:var(--purple)">—</div><div class="metric-sub">mean reversion</div></div>
+      <div class="metric"><div class="metric-label">Confirmed</div><div class="metric-value" id="m-conf" style="color:var(--green)">—</div><div class="metric-sub">2-bar filter passed</div></div>
+      <div class="metric"><div class="metric-label">Paper</div><div class="metric-value" id="m-paper" style="color:var(--blue)">—</div><div class="metric-sub">simulated</div></div>
+      <div class="metric"><div class="metric-label">Live</div><div class="metric-value" id="m-live" style="color:var(--red)">—</div><div class="metric-sub">real money</div></div>
+      <div class="metric"><div class="metric-label">Risk deployed</div><div class="metric-value" id="m-risk">—</div><div class="metric-sub">USD at risk</div></div>
+      <div class="metric"><div class="metric-label">Errors</div><div class="metric-value" id="m-err" style="color:var(--red)">—</div><div class="metric-sub">failed orders</div></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div id="table-section" style="display:none">
+    <div class="toolbar">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div class="section-label" style="margin:0">All trades</div>
+        <div class="filters" id="filters">
+          <button class="f-btn on" onclick="setFilter('ALL',this)">All</button>
+          <button class="f-btn" onclick="setFilter('LONG',this)">Long</button>
+          <button class="f-btn" onclick="setFilter('SHORT',this)">Short</button>
+          <button class="f-btn" onclick="setFilter('ORB',this)">ORB</button>
+          <button class="f-btn" onclick="setFilter('VWAP',this)">VWAP</button>
+          <button class="f-btn" onclick="setFilter('PAPER',this)">Paper</button>
+          <button class="f-btn" onclick="setFilter('LIVE',this)">Live</button>
+          <button class="f-btn" onclick="setFilter('ERROR',this)">Errors</button>
+        </div>
+      </div>
+      <input class="search-input" id="search" placeholder="Search symbol..." oninput="renderTable()"/>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('timestamp')" data-col="timestamp">Timestamp (ET)</th>
+              <th onclick="sortBy('symbol')" data-col="symbol">Symbol</th>
+              <th>Direction</th>
+              <th>Strategy</th>
+              <th>Mode</th>
+              <th onclick="sortBy('entry_price')" data-col="entry_price">Entry $</th>
+              <th onclick="sortBy('stop_price')" data-col="stop_price">Stop $</th>
+              <th>T1 $</th>
+              <th>T2 $</th>
+              <th onclick="sortBy('qty')" data-col="qty">Qty</th>
+              <th onclick="sortBy('risk_dollars')" data-col="risk_dollars">Risk $</th>
+              <th>Confirmed</th>
+              <th>ORB range</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="footer">
+      <span id="row-count"></span>
+      <span id="last-fetched"></span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawer-title">Trade detail</div>
+      <button class="close-btn" onclick="closeDrawer()">×</button>
+    </div>
+    <div id="drawer-body"></div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let all=[], filtered=[], sortCol='timestamp', sortDir='desc', activeFilter='ALL';
+
+// ── Persist credentials ────────────────────────────────────────────────────
+function loadCreds(){
+  document.getElementById('inp-gist').value  = localStorage.getItem('gist_id')||'';
+  document.getElementById('inp-token').value = localStorage.getItem('gist_token')||'';
+  if(localStorage.getItem('gist_id')&&localStorage.getItem('gist_token')) connect(true);
+}
+
+// ── Clock ──────────────────────────────────────────────────────────────────
+function tick(){
+  const now=new Date();
+  document.getElementById('clock').textContent=
+    now.toLocaleString('en-US',{timeZone:'America/New_York',
+      weekday:'short',month:'short',day:'numeric',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})+' ET';
+  const day=now.toLocaleString('en-US',{timeZone:'America/New_York',weekday:'short'});
+  const h=+now.toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',hour12:false});
+  const m=+now.toLocaleString('en-US',{timeZone:'America/New_York',minute:'numeric'});
+  const mins=h*60+m, isWD=!['Sat','Sun'].includes(day), p=document.getElementById('market-pill');
+  if(!isWD){p.textContent='Weekend';p.className='market-pill pill-weekend';}
+  else if(mins>=570&&mins<960){p.textContent='● Market open';p.className='market-pill pill-open';}
+  else{p.textContent='Market closed';p.className='market-pill pill-closed';}
+}
+setInterval(tick,1000);tick();
+
+// ── Connect ────────────────────────────────────────────────────────────────
+async function connect(silent=false){
+  const gistId=document.getElementById('inp-gist').value.trim();
+  const token =document.getElementById('inp-token').value.trim();
+  if(!gistId||!token){if(!silent)showErr('Enter both Gist ID and GitHub token.');return;}
+  hideErr();
+  if(!silent){document.getElementById('connect-card').querySelector('.btn-primary').textContent='Loading...';}
+  try{
+    const res=await fetch(`https://api.github.com/gists/${gistId}`,{
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!res.ok)throw new Error(`GitHub API ${res.status} — check Gist ID and token`);
+    const data=await res.json();
+    const file=data.files['trade_records.json'];
+    if(!file)throw new Error('trade_records.json not found in this Gist. Has the bot run yet?');
+    const records=JSON.parse(file.content);
+    const cutoff=Date.now()-7*864e5;
+    all=records.filter(r=>{try{return new Date(r.timestamp).getTime()>=cutoff;}catch{return true;}});
+    localStorage.setItem('gist_id',gistId);
+    localStorage.setItem('gist_token',token);
+    document.getElementById('connect-card').style.display='none';
+    document.getElementById('refresh-btn').style.display='';
+    document.getElementById('last-fetched').textContent=
+      'Last fetched: '+new Date().toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})+' ET';
+    renderMetrics();renderTable();
+    document.getElementById('metrics-section').style.display='';
+    document.getElementById('table-section').style.display='';
+  }catch(e){
+    showErr('Error: '+e.message);
+    if(!silent)document.getElementById('connect-card').querySelector('.btn-primary').textContent='Connect';
+  }
+}
+
+async function refresh(){
+  const gistId=localStorage.getItem('gist_id');
+  const token =localStorage.getItem('gist_token');
+  if(!gistId||!token)return;
+  document.getElementById('refresh-btn').textContent='Loading...';
+  try{
+    const res=await fetch(`https://api.github.com/gists/${gistId}`,{
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+    });
+    const data=await res.json();
+    const file=data.files['trade_records.json'];
+    const records=JSON.parse(file.content);
+    const cutoff=Date.now()-7*864e5;
+    all=records.filter(r=>{try{return new Date(r.timestamp).getTime()>=cutoff;}catch{return true;}});
+    renderMetrics();renderTable();
+    document.getElementById('last-fetched').textContent=
+      'Last fetched: '+new Date().toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})+' ET';
+  }catch(e){console.error(e);}
+  finally{document.getElementById('refresh-btn').textContent='↻ Refresh';}
+}
+
+function showErr(m){const e=document.getElementById('err-box');e.textContent=m;e.style.display='block';}
+function hideErr(){document.getElementById('err-box').style.display='none';}
+
+// ── Timestamp helpers ──────────────────────────────────────────────────────
+function toET(ts){
+  try{
+    const d=new Date(ts);
+    return{
+      date: d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',year:'numeric'}),
+      time: d.toLocaleString('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+      full: d.toLocaleString('en-US',{timeZone:'America/New_York',
+        weekday:'long',year:'numeric',month:'long',day:'numeric',
+        hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,timeZoneName:'short'}),
+      ms:   d.getTime(),
+    };
+  }catch{return{date:'—',time:'—',full:'—',ms:0};}
+}
+
+function timeAgo(ms){
+  const diff=Math.floor((Date.now()-ms)/1000);
+  if(diff<60)return diff+'s ago';
+  if(diff<3600)return Math.floor(diff/60)+'m ago';
+  if(diff<86400)return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+// ── Metrics ────────────────────────────────────────────────────────────────
+function renderMetrics(){
+  const r=all;
+  const risk=r.reduce((s,x)=>s+(x.risk_dollars||0),0);
+  document.getElementById('m-total').textContent=r.length;
+  document.getElementById('m-long').textContent=r.filter(x=>x.direction==='LONG').length;
+  document.getElementById('m-short').textContent=r.filter(x=>x.direction==='SHORT').length;
+  document.getElementById('m-orb').textContent=r.filter(x=>x.strategy==='ORB').length;
+  document.getElementById('m-vwap').textContent=r.filter(x=>x.strategy==='VWAP').length;
+  document.getElementById('m-conf').textContent=r.filter(x=>x.confirmed).length;
+  document.getElementById('m-paper').textContent=r.filter(x=>x.mode==='PAPER').length;
+  document.getElementById('m-live').textContent=r.filter(x=>x.mode==='LIVE').length;
+  document.getElementById('m-err').textContent=r.filter(x=>String(x.status||'').startsWith('ERROR')).length;
+  document.getElementById('m-risk').textContent='$'+Math.round(risk).toLocaleString();
+}
+
+// ── Filter + sort + render ─────────────────────────────────────────────────
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderTable();
+}
+
+function sortBy(col){
+  if(sortCol===col) sortDir=sortDir==='asc'?'desc':'asc';
+  else{sortCol=col;sortDir=col==='timestamp'?'desc':'asc';}
+  document.querySelectorAll('th[data-col]').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.col===sortCol) th.classList.add('sort-'+sortDir);
+  });
+  renderTable();
+}
+
+function dollar(v){return v!=null?'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';}
+
+function renderTable(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  filtered=all.filter(r=>{
+    const s=r.symbol||'';
+    if(q&&!s.toLowerCase().includes(q)) return false;
+    if(activeFilter==='ALL')    return true;
+    if(activeFilter==='LONG')   return r.direction==='LONG';
+    if(activeFilter==='SHORT')  return r.direction==='SHORT';
+    if(activeFilter==='ORB')    return r.strategy==='ORB';
+    if(activeFilter==='VWAP')   return r.strategy==='VWAP';
+    if(activeFilter==='PAPER')  return r.mode==='PAPER';
+    if(activeFilter==='LIVE')   return r.mode==='LIVE';
+    if(activeFilter==='ERROR')  return String(r.status||'').startsWith('ERROR');
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a,b)=>{
+    let va=a[sortCol]??'', vb=b[sortCol]??'';
+    if(sortCol==='timestamp'){va=new Date(va).getTime();vb=new Date(vb).getTime();}
+    else if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    if(va<vb) return sortDir==='asc'?-1:1;
+    if(va>vb) return sortDir==='asc'?1:-1;
+    return 0;
+  });
+
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td colspan="15" style="text-align:center;padding:40px;color:var(--muted)">No trades match this filter.</td></tr>';
+  }else{
+    filtered.forEach((r,i)=>{
+      const ts=toET(r.timestamp);
+      const isErr=String(r.status||'').startsWith('ERROR');
+      const orbRange=(r.orb_high&&r.orb_low)?
+        `$${Number(r.orb_low).toFixed(2)}–$${Number(r.orb_high).toFixed(2)}`:'—';
+      const tr=document.createElement('tr');
+      tr.style.cursor='pointer';
+      tr.onclick=()=>openDrawer(r);
+      tr.innerHTML=`
+        <td>
+          <div class="ts-date">${ts.date}</div>
+          <div class="ts-time">${ts.time}</div>
+          <div class="ts-ago">${timeAgo(ts.ms)}</div>
+        </td>
+        <td class="sym">${r.symbol||'—'}</td>
+        <td><span class="tag tag-${(r.direction||'').toLowerCase()}">${r.direction||'—'}</span></td>
+        <td><span class="tag tag-${(r.strategy||'vwap').toLowerCase()}">${r.strategy||'—'}</span></td>
+        <td><span class="tag tag-${(r.mode||'paper').toLowerCase()}">${r.mode||'—'}</span></td>
+        <td class="mono">${dollar(r.entry_price)}</td>
+        <td class="mono">${dollar(r.stop_price)}</td>
+        <td class="mono">${dollar(r.target1_price)}</td>
+        <td class="mono">${dollar(r.target2_price)}</td>
+        <td class="mono">${r.qty||'—'}</td>
+        <td class="mono">${dollar(r.risk_dollars)}</td>
+        <td><span class="tag ${r.confirmed?'tag-yes':'tag-no'}">${r.confirmed?'Yes':'No'}</span></td>
+        <td class="mono">${orbRange}</td>
+        <td><span class="tag ${isErr?'tag-error':'tag-open'}">${isErr?'Error':r.status||'Open'}</span></td>
+        <td style="color:var(--muted);font-size:12px">›</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('row-count').textContent=
+    `Showing ${filtered.length} of ${all.length} trade${all.length!==1?'s':''} · 7-day window`;
+}
+
+// ── Detail drawer ──────────────────────────────────────────────────────────
+function openDrawer(r){
+  const ts=toET(r.timestamp);
+  const isErr=String(r.status||'').startsWith('ERROR');
+  const orbInfo=(r.orb_high&&r.orb_low)?`$${Number(r.orb_low).toFixed(2)} – $${Number(r.orb_high).toFixed(2)}`:'N/A (VWAP trade)';
+
+  document.getElementById('drawer-title').textContent=
+    `${r.symbol} ${r.direction} · ${r.strategy} · ${r.mode}`;
+
+  document.getElementById('drawer-body').innerHTML=`
+    <div style="background:var(--bg);border-radius:var(--r-sm);padding:11px 14px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:3px">Timestamp (ET) — full precision</div>
+      <div style="font-size:14px;font-weight:500">${ts.full}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${timeAgo(ts.ms)} · Run ID: ${r.run_id||'—'}</div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-row"><span class="detail-label">Symbol</span><span class="detail-value">${r.symbol||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Direction</span><span class="detail-value"><span class="tag tag-${(r.direction||'').toLowerCase()}">${r.direction||'—'}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Strategy</span><span class="detail-value"><span class="tag tag-${(r.strategy||'vwap').toLowerCase()}">${r.strategy||'—'}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Mode</span><span class="detail-value"><span class="tag tag-${(r.mode||'paper').toLowerCase()}">${r.mode||'—'}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Entry price</span><span class="detail-value">${dollar(r.entry_price)}</span></div>
+      <div class="detail-row"><span class="detail-label">Qty (shares)</span><span class="detail-value">${r.qty||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Stop loss</span><span class="detail-value" style="color:var(--red)">${dollar(r.stop_price)}</span></div>
+      <div class="detail-row"><span class="detail-label">Risk $</span><span class="detail-value" style="color:var(--red)">${dollar(r.risk_dollars)}</span></div>
+      <div class="detail-row"><span class="detail-label">Target 1 (50%)</span><span class="detail-value" style="color:var(--green)">${dollar(r.target1_price)}</span></div>
+      <div class="detail-row"><span class="detail-label">Target 2 (50%)</span><span class="detail-value" style="color:var(--green)">${dollar(r.target2_price)}</span></div>
+      <div class="detail-row"><span class="detail-label">Capital limit</span><span class="detail-value">${dollar(r.capital_limit)}</span></div>
+      <div class="detail-row"><span class="detail-label">Portfolio value</span><span class="detail-value">${dollar(r.portfolio_value)}</span></div>
+      <div class="detail-row"><span class="detail-label">Confirmed (2-bar)</span><span class="detail-value">${r.confirmed?'Yes — signal held for 2 bars':'No — single bar'}</span></div>
+      <div class="detail-row"><span class="detail-label">ORB range</span><span class="detail-value">${orbInfo}</span></div>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="tag ${isErr?'tag-error':'tag-open'}">${isErr?'Error':r.status||'Open'}</span></span></div>
+    </div>
+
+    <div class="detail-reason">${r.signal_reason||'No signal reason recorded'}</div>
+
+    <div class="order-ids">
+      <h4>Alpaca order IDs</h4>
+      <div class="order-id-row"><span>Entry</span><span class="order-id-val">${r.entry_order_id||'—'}</span></div>
+      <div class="order-id-row"><span>Stop loss</span><span class="order-id-val">${r.stop_order_id||'—'}</span></div>
+      <div class="order-id-row"><span>Target 1</span><span class="order-id-val">${r.t1_order_id||'—'}</span></div>
+      <div class="order-id-row"><span>Target 2</span><span class="order-id-val">${r.t2_order_id||'—'}</span></div>
+      <div class="order-id-row"><span>Run ID</span><span class="order-id-val">${r.run_id||'—'}</span></div>
+    </div>
+  `;
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+
+function closeDrawer(e){
+  if(!e||e.target===document.getElementById('drawer-overlay'))
+    document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadCreds();
+document.getElementById('inp-gist').addEventListener('keydown',e=>{if(e.key==='Enter')connect();});
+document.getElementById('inp-token').addEventListener('keydown',e=>{if(e.key==='Enter')connect();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('drawer-overlay').classList.remove('open');});
+</script>
+</body>
+</html>
