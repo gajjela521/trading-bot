@@ -1,1 +1,127 @@
-[]
+[
+  {
+    "timestamp": "2026-06-03T12:04:55.285865-04:00",
+    "run_id": "26897142826",
+    "mode": "PAPER",
+    "status": "OK",
+    "market_open": true,
+    "timing_reason": "Market open \u2014 Wednesday 12:04 PM ET",
+    "portfolio_value": 100000.0,
+    "buying_power": 200000.0,
+    "capital_limit": 1000.0,
+    "open_positions": 0,
+    "trades_placed": 0,
+    "signals_found": 0,
+    "guardrail_blocks": 0,
+    "watchlist": [
+      "NBIS",
+      "NVDA",
+      "TSLA",
+      "AAPL",
+      "MSFT",
+      "AMD",
+      "META"
+    ],
+    "scans": [
+      {
+        "symbol": "NBIS",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      },
+      {
+        "symbol": "NVDA",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      },
+      {
+        "symbol": "TSLA",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      },
+      {
+        "symbol": "AAPL",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      },
+      {
+        "symbol": "MSFT",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      },
+      {
+        "symbol": "AMD",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      },
+      {
+        "symbol": "META",
+        "signal": "NO_DATA",
+        "strategy": "\u2014",
+        "price": 0,
+        "rsi": 0,
+        "vwap": 0,
+        "ema9": 0,
+        "ema21": 0,
+        "volume": 0,
+        "confirmed": false,
+        "reason": "Insufficient bar data",
+        "traded": false
+      }
+    ],
+    "error_detail": ""
+  }
+]
