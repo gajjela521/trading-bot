@@ -924,5 +924,31 @@
     ],
     "scans": [],
     "error_detail": "Mode confirmation failed"
+  },
+  {
+    "timestamp": "2026-06-04T12:35:34.930400-04:00",
+    "run_id": "26965493036",
+    "mode": "PAPER",
+    "status": "ERROR",
+    "market_open": true,
+    "timing_reason": "Market open \u2014 Thursday 12:35 PM ET",
+    "portfolio_value": 100000.0,
+    "buying_power": 400000.0,
+    "capital_limit": 0,
+    "open_positions": 0,
+    "trades_placed": 0,
+    "signals_found": 0,
+    "guardrail_blocks": 0,
+    "watchlist": [
+      "NBIS",
+      "NVDA",
+      "TSLA",
+      "AAPL",
+      "MSFT",
+      "AMD",
+      "META"
+    ],
+    "scans": [],
+    "error_detail": "Mode confirmation failed"
   }
 ]
